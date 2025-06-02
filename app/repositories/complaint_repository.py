@@ -1,7 +1,7 @@
 # =======================
 # app/repositories/complaint_repository.py
 # =======================
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from app.repositories.base import BaseRepository
 from app.interfaces.database_provider import DatabaseProvider
 

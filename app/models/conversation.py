@@ -2,6 +2,7 @@
 # app/models/conversation.py
 # =======================
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 from enum import Enum
 from pydantic import Field
 

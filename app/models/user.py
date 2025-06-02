@@ -2,6 +2,7 @@
 # app/models/user.py
 # =======================
 from typing import Optional, Dict, Any
+from datetime import datetime
 from enum import Enum
 from pydantic import EmailStr, Field
 

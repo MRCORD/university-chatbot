@@ -2,7 +2,7 @@
 # app/interfaces/conversation_engine.py
 # =======================
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
