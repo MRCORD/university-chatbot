@@ -1,7 +1,7 @@
 # =======================
 # app/engines/factory.py
 # =======================
-from typing import Dict, Any
+from typing import Dict, Any, List
 import structlog
 
 from app.interfaces.conversation_engine import ConversationEngine
