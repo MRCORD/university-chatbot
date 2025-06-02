@@ -1,114 +1,79 @@
-# =======================
-# SETUP INSTRUCTIONS
-# =======================
+# University Chatbot
 
-## 🚀 Quick Start Guide
+AI-powered chatbot for Universidad del Pacífico administrative assistance.
 
-### 1. Clone and Setup Environment
+## Features
 
-```bash
-# Create project directory
-mkdir university-chatbot
-cd university-chatbot
+- 🤖 **Intelligent Document QA** - Query official university documents
+- 📋 **Complaint Processing** - Structured complaint collection and public display
+- 🔍 **Vector Search** - Semantic similarity search across documents
+- ⚡ **Real-time Updates** - Live complaint tracking and status changes
+- 🏗️ **Clean Architecture** - Modular, testable, and maintainable code
 
-# Create virtual environment
-python -m venv venv
+## Quick Start
 
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
+1. **Clone and Setup**
+   ```bash
+   git clone <repo-url>
+   cd university-chatbot
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
 
-# Create the project structure (copy all the files from the artifacts)
-```
+Environment Configuration
+bashcp .env.example .env
+# Edit .env with your Supabase and AI provider credentials
 
-### 2. Install Dependencies
+Database Setup
+bashpython scripts/setup_database.py
 
-```bash
-# Create requirements.txt with the content from above
-pip install -r requirements.txt
-```
+Run Development Server
+bashuvicorn app.main:app --reload
 
-### 3. Set Up Supabase
+Access API
 
-1. **Create Supabase Project:**
-   - Go to https://supabase.com
-   - Create new project
-   - Note your Project URL and API keys
+API: http://localhost:8000
+Docs: http://localhost:8000/docs
+Health: http://localhost:8000/health
 
-2. **Set Up Database:**
-   - Go to SQL Editor in Supabase Dashboard
-   - Run the database schema script (from previous artifact)
-   - Run the storage buckets script (from previous artifact)
 
-3. **Configure Storage:**
-   - Go to Storage in Supabase Dashboard
-   - Verify buckets were created: `official-documents`, `user-uploads`, `processed-content`
 
-### 4. Configure Environment
+Project Structure
 
-```bash
-# Copy environment template
-cp .env.example .env
+app/api/ - FastAPI endpoints and routing
+app/services/ - Business logic and orchestration
+app/repositories/ - Data access layer
+app/engines/ - Conversation engines (LangGraph, etc.)
+app/providers/ - External service integrations
+tests/ - Comprehensive test suite
 
-# Edit .env with your actual values:
-# - Add your Supabase URL and keys
-# - Add your OpenAI API key
-# - Adjust other settings as needed
-```
+Development
+bash# Install development dependencies
+pip install -r requirements-dev.txt
 
-### 5. Initialize Database
-
-```bash
-# Run setup script
-python scripts/setup_database.py
-
-# Create admin user
-python scripts/create_admin_user.py admin@up.edu.pe
-```
-
-### 6. Start the Application
-
-```bash
-# Start development server
-uvicorn app.main:app --reload
-
-# Or use the script
-python -m app.main
-```
-
-### 7. Test the API
-
-```bash
-# Test endpoints
-python scripts/test_api.py
-
-# Or visit the interactive docs
-# http://localhost:8000/docs
-```
-
-## 📋 What You Can Do Now
-
-✅ **Chat with the bot:** POST `/api/v1/chat/`
-✅ **Upload documents:** POST `/api/v1/documents/upload`
-✅ **Submit complaints:** POST `/api/v1/complaints/`
-✅ **View complaints:** GET `/api/v1/complaints/`
-✅ **Create users:** POST `/api/v1/users/`
-
-## 🔧 Development Commands
-
-```bash
-# Run tests (when implemented)
+# Run tests
 pytest
 
-# Format code
+# Code formatting
 black app/ tests/
 isort app/ tests/
 
-# Type checking
+# Type checking  
 mypy app/
+Deployment
+See docs/deployment.md for production deployment instructions.
 
-# Start with Docker
-docker-compose up --build
-```
+---
+
+## **Next Steps After Creating This Structure**
+
+1. **Create the directories:**
+   ```bash
+   mkdir -p university-chatbot/app/{api/v1,core,interfaces,models,repositories,services,engines,providers/{llm,database,storage},utils}
+   mkdir -p university-chatbot/{tests/{unit,integration,e2e},scripts,data/{uploads,processed,sample_documents},docs}
+
+Create empty __init__.py files:
+bashfind university-chatbot -type d -name "app" -o -name "tests" | xargs -I {} find {} -type d -exec touch {}/__init__.py \;
+
+Copy the requirements.txt and .env.example files
+Start with core configuration (next step)
