@@ -1,94 +1,64 @@
-"""Document management API endpoints."""
+# =======================
+# app/api/v1/documents.py
+# =======================
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form
+from typing import Optional
 
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
-from dependency_injector.wiring import inject, Provide
-
-from app.core.container import Container
-from app.models.document import DocumentResponse, DocumentCreate
+from app.core.dependencies import get_document_service
 from app.services.document_service import DocumentService
+from app.models.document import (
+    DocumentType, DocumentResponse, DocumentSearchRequest, DocumentSearchResponse
+)
 
 router = APIRouter()
 
-
 @router.post("/upload", response_model=DocumentResponse)
-@inject
 async def upload_document(
     file: UploadFile = File(...),
-    document_service: DocumentService = Depends(Provide[Container.document_service])
-):
-    """Upload and process a document."""
+    document_type: DocumentType = Form(...),
+    faculty: Optional[str] = Form(None),
+    academic_year: Optional[str] = Form(None),
+    uploaded_by: str = Form(...),
+    document_service: DocumentService = Depends(get_document_service)
+) -> DocumentResponse:
+    """Upload a new document."""
     try:
-        document = await document_service.upload_document(file)
+        if not file.filename or not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+        
+        document = await document_service.upload_document(
+            file=file.file,
+            filename=file.filename,
+            document_type=document_type,
+            uploaded_by=uploaded_by,
+            faculty=faculty,
+            academic_year=academic_year
+        )
         return document
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error uploading document: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
-
-@router.get("/", response_model=List[DocumentResponse])
-@inject
-async def list_documents(
-    skip: int = 0,
-    limit: int = 100,
-    document_service: DocumentService = Depends(Provide[Container.document_service])
-):
-    """List all documents."""
+@router.post("/search", response_model=DocumentSearchResponse)
+async def search_documents(
+    request: DocumentSearchRequest,
+    document_service: DocumentService = Depends(get_document_service)
+) -> DocumentSearchResponse:
+    """Search documents using vector similarity."""
     try:
-        documents = await document_service.list_documents(skip=skip, limit=limit)
-        return documents
+        results = await document_service.search_documents(request)
+        return results
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error listing documents: {str(e)}"
-        )
-
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 @router.get("/{document_id}", response_model=DocumentResponse)
-@inject
 async def get_document(
     document_id: str,
-    document_service: DocumentService = Depends(Provide[Container.document_service])
-):
+    document_service: DocumentService = Depends(get_document_service)
+) -> DocumentResponse:
     """Get document by ID."""
     try:
-        document = await document_service.get_document(document_id)
-        if not document:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Document not found"
-            )
-        return document
-    except HTTPException:
-        raise
+        # Implementation would call document_service.get_by_id
+        raise HTTPException(status_code=501, detail="Not implemented yet")
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error retrieving document: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get document: {str(e)}")
 
-
-@router.delete("/{document_id}")
-@inject
-async def delete_document(
-    document_id: str,
-    document_service: DocumentService = Depends(Provide[Container.document_service])
-):
-    """Delete a document."""
-    try:
-        success = await document_service.delete_document(document_id)
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Document not found"
-            )
-        return {"message": "Document deleted successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error deleting document: {str(e)}"
-        )

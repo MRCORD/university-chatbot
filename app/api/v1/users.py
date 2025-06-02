@@ -1,95 +1,52 @@
-"""User management API endpoints."""
+# =======================
+# app/api/v1/users.py
+# =======================
+from fastapi import APIRouter, Depends, HTTPException
 
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
-from dependency_injector.wiring import inject, Provide
-
-from app.core.container import Container
-from app.models.user import UserCreate, UserResponse, UserUpdate
+from app.core.dependencies import get_user_service
 from app.services.user_service import UserService
+from app.models.user import UserCreateRequest, UserResponse, UserUpdateRequest
 
 router = APIRouter()
 
-
 @router.post("/", response_model=UserResponse)
-@inject
 async def create_user(
-    user: UserCreate,
-    user_service: UserService = Depends(Provide[Container.user_service])
-):
+    request: UserCreateRequest,
+    user_service: UserService = Depends(get_user_service)
+) -> UserResponse:
     """Create a new user."""
     try:
-        response = await user_service.create_user(user)
-        return response
+        user = await user_service.create_user(request)
+        return user
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating user: {str(e)}"
-        )
-
-
-@router.get("/", response_model=List[UserResponse])
-@inject
-async def list_users(
-    skip: int = 0,
-    limit: int = 100,
-    user_service: UserService = Depends(Provide[Container.user_service])
-):
-    """List all users."""
-    try:
-        users = await user_service.list_users(skip=skip, limit=limit)
-        return users
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error listing users: {str(e)}"
-        )
-
+        raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
 
 @router.get("/{user_id}", response_model=UserResponse)
-@inject
 async def get_user(
     user_id: str,
-    user_service: UserService = Depends(Provide[Container.user_service])
-):
+    user_service: UserService = Depends(get_user_service)
+) -> UserResponse:
     """Get user by ID."""
     try:
-        user = await user_service.get_user(user_id)
+        user = await user_service.get_user_by_id(user_id)
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=404, detail="User not found")
         return user
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error retrieving user: {str(e)}"
-        )
-
+        raise HTTPException(status_code=500, detail=f"Failed to get user: {str(e)}")
 
 @router.put("/{user_id}", response_model=UserResponse)
-@inject
 async def update_user(
     user_id: str,
-    user_update: UserUpdate,
-    user_service: UserService = Depends(Provide[Container.user_service])
-):
+    request: UserUpdateRequest,
+    user_service: UserService = Depends(get_user_service)
+) -> UserResponse:
     """Update user information."""
     try:
-        user = await user_service.update_user(user_id, user_update)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        return user
-    except HTTPException:
-        raise
+        # Implementation would call user_service.update_user
+        raise HTTPException(status_code=501, detail="Not implemented yet")
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error updating user: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to update user: {str(e)}")
+
