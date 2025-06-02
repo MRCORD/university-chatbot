@@ -1,7 +1,7 @@
 # =======================
 # app/services/complaint_service.py
 # =======================
-from typing import List
+from typing import List, Optional
 import structlog
 
 from app.repositories.complaint_repository import ComplaintRepository
