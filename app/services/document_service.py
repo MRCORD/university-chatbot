@@ -30,13 +30,18 @@ class DocumentService:
         document_repo: DocumentRepository,
         storage_provider: StorageProvider,
         embedding_service: EmbeddingService,
-        vector_repo: VectorRepository
+        vector_repo: VectorRepository,
+        chunking_strategy: str = "default"
     ):
         self.document_repo = document_repo
         self.storage = storage_provider
         self.embeddings = embedding_service
         self.vector_repo = vector_repo
-        self.processor = DocumentProcessor(chunk_size=1000, chunk_overlap=200)
+        self.processor = DocumentProcessor(
+            chunk_size=1000, 
+            chunk_overlap=200,
+            chunking_strategy=chunking_strategy
+        )
     
     async def upload_document(
         self,
@@ -245,7 +250,11 @@ class DocumentService:
                             'content': chunk['content'],
                             'chunk_index': chunk['chunk_index'],
                             'page_number': chunk.get('page_number'),
+                            'section_title': chunk.get('section_title'),
+                            'start_char': chunk.get('start_char'),
+                            'end_char': chunk.get('end_char'),
                             'character_count': chunk.get('character_count'),
+                            'chunk_metadata': chunk.get('chunk_metadata', {}),
                             'embedding': embedding
                         }
                         
@@ -382,3 +391,16 @@ class DocumentService:
                         document_id=document_id, 
                         error=str(e))
             raise AppException(f"Failed to reprocess document: {str(e)}")
+    
+    def set_chunking_strategy(self, strategy: str):
+        """Set the chunking strategy for document processing.
+        
+        Args:
+            strategy: One of 'default', 'sentences', 'paragraphs', 'semantic'
+        """
+        valid_strategies = ['default', 'sentences', 'paragraphs', 'semantic']
+        if strategy not in valid_strategies:
+            raise ValueError(f"Invalid strategy '{strategy}'. Must be one of: {valid_strategies}")
+        
+        self.processor.chunking_strategy = strategy
+        logger.info("Chunking strategy updated", strategy=strategy)
