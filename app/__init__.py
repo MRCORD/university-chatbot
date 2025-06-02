@@ -1,4 +1,6 @@
-"""University Chatbot Application Package."""
+# =======================
+# app/__init__.py
+# =======================
+"""University Chatbot Application."""
 
-__version__ = "0.1.0"
-__description__ = "University Chatbot with RAG capabilities"
+__version__ = "1.0.0"

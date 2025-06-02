@@ -1,32 +1,39 @@
-"""FastAPI dependencies."""
+# =======================
+# app/core/dependencies.py
+# =======================
+from fastapi import Depends
 
-from typing import Generator
-from fastapi import Depends, HTTPException, status
-from dependency_injector.wiring import inject, Provide
-
-from app.core.container import Container
+from app.core.container import get_container, Container
+from app.services.conversation_service import ConversationService
+from app.services.document_service import DocumentService
 from app.services.user_service import UserService
+from app.services.complaint_service import ComplaintService
 
 
-async def get_database():
-    """Get database connection."""
-    # This would be implemented based on your database provider
-    pass
+def get_conversation_service(
+    container: Container = Depends(get_container)
+) -> ConversationService:
+    """FastAPI dependency for conversation service."""
+    return container.get_conversation_service()
 
 
-@inject
-async def get_current_user(
-    user_service: UserService = Depends(Provide[Container.user_service])
-):
-    """Get current authenticated user."""
-    # This would be implemented based on your authentication strategy
-    # For now, returning a placeholder
-    pass
+def get_document_service(
+    container: Container = Depends(get_container)
+) -> DocumentService:
+    """FastAPI dependency for document service."""
+    return container.get_document_service()
 
 
-async def get_current_active_user(
-    current_user = Depends(get_current_user)
-):
-    """Get current active user."""
-    # Add user active status check here
-    return current_user
+def get_user_service(
+    container: Container = Depends(get_container)
+) -> UserService:
+    """FastAPI dependency for user service."""
+    return container.get_user_service()
+
+
+def get_complaint_service(
+    container: Container = Depends(get_container)
+) -> ComplaintService:
+    """FastAPI dependency for complaint service."""
+    return container.get_complaint_service()
+

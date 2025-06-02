@@ -1,70 +1,71 @@
-"""Application configuration settings."""
-
-import os
+# =======================
+# app/core/config.py
+# =======================
+from functools import lru_cache
 from typing import List, Optional
-from pydantic import BaseSettings, validator
+from pydantic_settings import BaseSettings
+from pydantic import Field
 
 
 class Settings(BaseSettings):
-    """Application settings configuration."""
+    """Application settings loaded from environment variables."""
     
     # Application
-    PROJECT_NAME: str = "University Chatbot"
-    VERSION: str = "0.1.0"
-    DEBUG: bool = False
-    API_V1_STR: str = "/api/v1"
+    APP_NAME: str = "University Chatbot"
+    APP_VERSION: str = "1.0.0"
+    DEBUG: bool = Field(default=False, description="Debug mode")
+    ENVIRONMENT: str = Field(default="development", description="Environment name")
+    LOG_LEVEL: str = Field(default="INFO", description="Log level")
+    SECRET_KEY: str = Field(..., description="Secret key for JWT tokens")
     
-    # Server
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000
-    ALLOWED_HOSTS: List[str] = ["*"]
+    # CORS
+    ALLOWED_ORIGINS: List[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
     
-    # Database
-    DATABASE_URL: Optional[str] = None
-    SUPABASE_URL: Optional[str] = None
-    SUPABASE_KEY: Optional[str] = None
+    # Supabase
+    SUPABASE_URL: str = Field(..., description="Supabase project URL")
+    SUPABASE_ANON_KEY: str = Field(..., description="Supabase anonymous key")
+    SUPABASE_SERVICE_ROLE_KEY: str = Field(..., description="Supabase service role key")
     
-    # Vector Database
-    VECTOR_DB_URL: Optional[str] = None
-    EMBEDDING_MODEL: str = "text-embedding-ada-002"
-    CHUNK_SIZE: int = 1000
-    CHUNK_OVERLAP: int = 200
+    # Storage Buckets
+    DOCUMENTS_BUCKET: str = Field(default="official-documents")
+    UPLOADS_BUCKET: str = Field(default="user-uploads")
+    PROCESSED_BUCKET: str = Field(default="processed-content")
     
-    # LLM Providers
-    OPENAI_API_KEY: Optional[str] = None
-    ANTHROPIC_API_KEY: Optional[str] = None
-    MISTRAL_API_KEY: Optional[str] = None
-    DEFAULT_LLM_PROVIDER: str = "openai"
-    DEFAULT_MODEL: str = "gpt-3.5-turbo"
+    # AI Providers
+    OPENAI_API_KEY: Optional[str] = Field(default=None, description="OpenAI API key")
+    ANTHROPIC_API_KEY: Optional[str] = Field(default=None, description="Anthropic API key")
+    MISTRAL_API_KEY: Optional[str] = Field(default=None, description="Mistral API key")
     
-    # Storage
-    UPLOAD_DIR: str = "data/uploads"
-    PROCESSED_DIR: str = "data/processed"
-    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
-    ALLOWED_FILE_TYPES: List[str] = [".pdf", ".txt", ".docx", ".md"]
+    # Conversation Engine
+    CONVERSATION_ENGINE: str = Field(default="langgraph", description="Active conversation engine")
+    LANGGRAPH_LLM_PROVIDER: str = Field(default="openai", description="LLM provider for LangGraph")
+    LANGGRAPH_MODEL: str = Field(default="gpt-4o-mini", description="Model for LangGraph")
+    
+    # Vector Search
+    EMBEDDING_MODEL: str = Field(default="text-embedding-ada-002")
+    VECTOR_SIMILARITY_THRESHOLD: float = Field(default=0.7)
+    MAX_SEARCH_RESULTS: int = Field(default=10)
+    CHUNK_SIZE: int = Field(default=1000, description="Text chunk size for embeddings")
+    CHUNK_OVERLAP: int = Field(default=200, description="Overlap between chunks")
+    
+    # Feature Flags
+    ENABLE_DOCUMENT_SEARCH: bool = Field(default=True)
+    ENABLE_COMPLAINT_PROCESSING: bool = Field(default=True)
+    ENABLE_REAL_TIME_UPDATES: bool = Field(default=True)
     
     # Security
-    SECRET_KEY: str = "your-secret-key-here"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
     
-    # Logging
-    LOG_LEVEL: str = "INFO"
-    LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    
-    # Redis (for caching and sessions)
-    REDIS_URL: Optional[str] = None
+    # Monitoring
+    SENTRY_DSN: Optional[str] = Field(default=None, description="Sentry DSN for error tracking")
     
     class Config:
         env_file = ".env"
         case_sensitive = True
-    
-    @validator("ALLOWED_HOSTS", pre=True)
-    def assemble_cors_origins(cls, v):
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
 
 
-settings = Settings()
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached application settings."""
+    return Settings()
+
