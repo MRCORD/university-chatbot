@@ -25,21 +25,44 @@ class VectorRepository(BaseRepository):
     ) -> List[Dict[str, Any]]:
         """Perform vector similarity search with enhanced filtering."""
         try:
-            # Build filters
-            filters = {}
-            if document_type:
-                filters['document_type'] = document_type
-            if faculty:
-                filters['faculty'] = faculty
-            
-            # Perform vector search using database provider
+            # Perform vector search without document-level filters first
+            # (since document_type and faculty are in the documents table, not document_chunks)
             results = await self.db.vector_search(
                 query_vector=query_vector,
                 table="document_chunks",
                 similarity_threshold=similarity_threshold,
-                limit=limit,
-                filters=filters
+                limit=limit * 2,  # Get more results to filter later
+                filters=None  # No direct filters on chunks table
             )
+            
+            # If we need to filter by document_type or faculty, we need to check each chunk's document
+            if document_type or faculty:
+                filtered_results = []
+                for result in results:
+                    try:
+                        # Get the document for this chunk
+                        document_data = await self.db.get_by_id('documents', result['document_id'])
+                        if document_data:
+                            # Check if document matches our criteria
+                            type_match = not document_type or document_data.get('document_type') == document_type
+                            faculty_match = not faculty or document_data.get('faculty') == faculty
+                            
+                            if type_match and faculty_match:
+                                filtered_results.append(result)
+                                
+                        if len(filtered_results) >= limit:
+                            break
+                            
+                    except Exception as e:
+                        logger.warning("Error checking document filters", 
+                                     chunk_id=result.get('id'), 
+                                     error=str(e))
+                        continue
+                
+                results = filtered_results
+            else:
+                # No filtering needed, just limit the results
+                results = results[:limit]
             
             # Add similarity scores if not present
             for result in results:
