@@ -108,7 +108,7 @@ class DocumentService:
                 academic_year=document.get('academic_year'),
                 processing_status=ProcessingStatus(document['processing_status']),
                 metadata=document.get('metadata', {}),
-                created_at=document['created_at']
+                uploaded_at=document['uploaded_at']  # Changed from created_at
             )
             
         except Exception as e:
@@ -164,7 +164,7 @@ class DocumentService:
                         academic_year=document_data.get('academic_year'),
                         processing_status=ProcessingStatus(document_data['processing_status']),
                         metadata=document_data.get('metadata', {}),
-                        created_at=document_data['created_at']
+                        uploaded_at=document_data['uploaded_at']
                     )
                     
                     # Create chunk response
@@ -347,7 +347,7 @@ class DocumentService:
                 academic_year=document_data.get('academic_year'),
                 processing_status=ProcessingStatus(document_data['processing_status']),
                 metadata=document_data.get('metadata', {}),
-                created_at=document_data['created_at']
+                uploaded_at=document_data['uploaded_at']  # Changed from created_at
             )
             
         except Exception as e:

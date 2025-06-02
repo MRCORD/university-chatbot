@@ -57,7 +57,7 @@ class DocumentResponse(BaseResponse):
     academic_year: Optional[str]
     processing_status: ProcessingStatus
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    created_at: datetime
+    uploaded_at: datetime  # Changed from created_at to match database schema
 
 
 class DocumentChunkResponse(BaseResponse):
