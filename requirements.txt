@@ -1,41 +1,41 @@
 # FastAPI and server
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-python-multipart==0.0.6
+fastapi==0.115.12
+uvicorn[standard]==0.34.3
+python-multipart==0.0.12
 
 # Database and Storage
-supabase==2.3.0
-psycopg2-binary==2.9.9
-sqlalchemy==2.0.23
+supabase==2.15.2
+psycopg2-binary==2.9.10
+sqlalchemy==2.0.41
 
 # AI and ML
-langchain==0.1.0
-langgraph==0.0.26
-langchain-openai==0.0.5
-langchain-anthropic==0.0.4
-langchain-community==0.0.12
-openai==1.6.1
-anthropic==0.8.1
+langchain==0.3.25
+langgraph==0.4.7
+langchain-openai==0.3.19
+langchain-anthropic==0.3.14
+langchain-community==0.3.24
+openai==1.82.1
+anthropic==0.52.2
 
 # Vector operations
-numpy==1.24.3
-sentence-transformers==2.2.2
+numpy==1.26.4
+sentence-transformers==3.3.1
 
 # Document processing
-pypdf==3.17.4
-python-docx==1.1.0
-unstructured==0.11.8
+pypdf==5.1.0
+python-docx==1.1.2
+unstructured==0.16.12
 
 # Utilities
-pydantic==2.5.2
-pydantic-settings==2.1.0
+pydantic==2.11.5
+pydantic-settings==2.7.1
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-python-dateutil==2.8.2
-tenacity==8.2.3
+python-dateutil==2.9.0
+tenacity==9.0.0
 
 # Monitoring and logging
-structlog==23.2.0
-sentry-sdk[fastapi]==1.40.6
+structlog==24.4.0
+sentry-sdk[fastapi]==2.22.0
 
 # Development tools (in requirements-dev.txt)
