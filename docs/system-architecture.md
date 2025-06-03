@@ -642,13 +642,13 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph "API Layer"
-        subgraph "API Versioning"
+    subgraph API_Layer
+        subgraph API_Versioning
             V1[API v1]
             V2[API v2 (Future)]
         end
         
-        subgraph "API Endpoints"
+        subgraph API_Endpoints
             AUTH[Authentication]
             USERS[Users]
             CONVERSATIONS[Conversations]
@@ -657,7 +657,7 @@ graph TB
             HEALTH[Health Check]
         end
         
-        subgraph "Middleware"
+        subgraph Middleware
             CORS[CORS Middleware]
             AUTH_MW[Auth Middleware]
             RATE_LIMIT[Rate Limiting]
