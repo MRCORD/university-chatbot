@@ -4,6 +4,33 @@
 
 This document provides a comprehensive architectural overview of the University Chatbot system, featuring a provider-agnostic, microservices-inspired design with clean separation of concerns, dependency injection, and extensible interfaces.
 
+### System Philosophy
+
+The University Chatbot is built on the principle of **provider agnosticism**, meaning the system is designed to work with multiple different providers for each component (LLM providers, databases, storage solutions, etc.) without requiring architectural changes. This approach provides several key benefits:
+
+1. **Vendor Independence**: No lock-in to specific services or providers
+2. **Future-Proofing**: Easy adoption of new technologies as they emerge
+3. **Cost Optimization**: Ability to choose the most cost-effective solutions
+4. **Risk Mitigation**: Fallback options if primary providers become unavailable
+
+### Core Design Principles
+
+- **Clean Architecture**: Clear separation between business logic, data access, and external integrations
+- **SOLID Principles**: Single responsibility, open/closed, Liskov substitution, interface segregation, and dependency inversion
+- **Dependency Injection**: Loose coupling through dependency injection container
+- **Interface-Driven Design**: All external dependencies are abstracted behind interfaces
+- **Configuration-Based**: Provider selection through configuration, not code changes
+
+### Technology Stack
+
+- **Backend Framework**: FastAPI (Python) - High-performance async web framework
+- **Conversation Engine**: LangGraph - Advanced workflow orchestration for AI agents
+- **Database**: PostgreSQL with pgvector - Relational database with vector search capabilities
+- **LLM Provider**: OpenAI GPT models - Primary language model provider
+- **Vector Database**: pgvector - PostgreSQL extension for vector operations
+- **Cloud Services**: Supabase - Backend-as-a-service for database and storage
+- **Containerization**: Docker - Application containerization and deployment
+
 ## Table of Contents
 
 1. [High-Level Architecture](#high-level-architecture)
@@ -19,6 +46,58 @@ This document provides a comprehensive architectural overview of the University 
 
 ## High-Level Architecture
 
+The University Chatbot follows a layered architecture pattern with clear separation of concerns and well-defined interfaces between components. The system is designed to handle thousands of concurrent users while maintaining high availability and performance.
+
+### Architectural Layers
+
+#### 1. Client Layer
+The client layer represents all possible interfaces that users can utilize to interact with the chatbot:
+
+- **Web Interface**: Browser-based chat interface for desktop users
+- **API Clients**: Direct API integration for custom applications
+- **Mobile Apps**: Native mobile applications for iOS and Android
+
+This layer is completely decoupled from the business logic, allowing for multiple client implementations without affecting the core system.
+
+#### 2. API Gateway Layer
+The API Gateway serves as the single entry point for all client requests:
+
+- **FastAPI Application**: High-performance Python web framework with automatic API documentation
+- **Middleware Layer**: Cross-cutting concerns like CORS, authentication, rate limiting, and request logging
+- **API Router**: Routes requests to appropriate service handlers with proper validation
+
+#### 3. Business Logic Layer
+This layer contains the core intelligence and orchestration capabilities of the system:
+
+**Services Sublayer**:
+- **User Service**: User management, authentication, and profile operations
+- **Conversation Service**: Chat orchestration and conversation flow management
+- **Document Service**: Document processing, indexing, and retrieval
+- **Complaint Service**: Complaint submission, processing, and tracking
+- **Embedding Service**: Text embedding generation for semantic search
+
+**Conversation Engine Sublayer**:
+- **Engine Factory**: Provider-agnostic engine instantiation and management
+- **LangGraph Engine**: Current implementation using LangGraph for workflow orchestration
+- **Mock Engine**: Development and testing implementation
+
+#### 4. Data Access Layer
+The repository pattern is implemented to abstract database operations:
+
+- **User Repository**: User data persistence and retrieval
+- **Conversation Repository**: Chat history and session management
+- **Document Repository**: Document metadata and content storage
+- **Complaint Repository**: Complaint data management
+- **Vector Repository**: Vector embedding storage and similarity search
+
+#### 5. Provider Layer
+This layer implements the provider pattern for external service integration:
+
+- **LLM Providers**: OpenAI, Anthropic, and other language model providers
+- **Database Providers**: Supabase, PostgreSQL, and other database systems
+- **Storage Providers**: File storage solutions like Supabase Storage or AWS S3
+- **Vector Providers**: Vector database implementations like pgvector or Pinecone
+
 The University Chatbot system follows a layered architecture pattern with clear separation of concerns, enabling maintainability, scalability, and testability. The architecture is designed around the principle of **provider agnosticism**, allowing for easy swapping of external services and implementations.
 
 ### Architectural Layers Overview
@@ -30,6 +109,56 @@ The system is organized into five distinct layers, each with specific responsibi
 3. **Business Logic Layer**: Core application logic and conversation processing
 4. **Data Access Layer**: Database operations and data persistence
 5. **Provider Layer**: External service integrations and abstractions
+
+### Architectural Layers
+
+#### 1. Client Layer
+The client layer represents all possible interfaces that users can utilize to interact with the chatbot:
+
+- **Web Interface**: Browser-based chat interface for desktop users
+- **API Clients**: Direct API integration for custom applications  
+- **Mobile Apps**: Native mobile applications for iOS and Android
+
+This layer is completely decoupled from the business logic, allowing for multiple client implementations without affecting the core system.
+
+#### 2. API Gateway Layer
+The API Gateway serves as the single entry point for all client requests:
+
+- **FastAPI Application**: High-performance Python web framework with automatic API documentation
+- **Middleware Layer**: Cross-cutting concerns like CORS, authentication, rate limiting, and request logging
+- **API Router**: Routes requests to appropriate service handlers with proper validation
+
+#### 3. Business Logic Layer
+This layer contains the core intelligence and orchestration capabilities of the system:
+
+**Services Sublayer**:
+- **User Service**: User management, authentication, and profile operations
+- **Conversation Service**: Chat orchestration and conversation flow management
+- **Document Service**: Document processing, indexing, and retrieval
+- **Complaint Service**: Complaint submission, processing, and tracking
+- **Embedding Service**: Text embedding generation for semantic search
+
+**Conversation Engine Sublayer**:
+- **Engine Factory**: Provider-agnostic engine instantiation and management
+- **LangGraph Engine**: Current implementation using LangGraph for workflow orchestration
+- **Mock Engine**: Development and testing implementation
+
+#### 4. Data Access Layer
+The repository pattern is implemented to abstract database operations:
+
+- **User Repository**: User data persistence and retrieval
+- **Conversation Repository**: Chat history and session management
+- **Document Repository**: Document metadata and content storage
+- **Complaint Repository**: Complaint data management
+- **Vector Repository**: Vector embedding storage and similarity search
+
+#### 5. Provider Layer
+This layer implements the provider pattern for external service integration:
+
+- **LLM Providers**: OpenAI, Anthropic, and other language model providers
+- **Database Providers**: Supabase, PostgreSQL, and other database systems
+- **Storage Providers**: File storage solutions like Supabase Storage or AWS S3
+- **Vector Providers**: Vector database implementations like pgvector or Pinecone
 
 ### Key Architectural Principles
 
@@ -469,16 +598,31 @@ sequenceDiagram
 
 ## Conversation Engine Architecture
 
-The conversation engine is the intelligent core of the University Chatbot system, responsible for understanding user intents, retrieving relevant information, and generating contextually appropriate responses. The architecture is built on the principle of modularity, allowing for different conversation engines to be plugged in based on requirements.
+The conversation engine is the intelligent core of the University Chatbot system, responsible for understanding user intents, retrieving relevant information, and generating contextually appropriate responses. The architecture is built around the LangGraph framework, which provides sophisticated workflow orchestration capabilities for complex conversational AI scenarios.
 
 ### Engine Design Philosophy
 
-The conversation engine architecture follows several key design principles:
+The conversation engine architecture follows several key design principles that ensure scalability, maintainability, and extensibility:
 
+#### Core Principles
 - **Provider Agnosticism**: The engine can work with different LLM providers, vector databases, and storage systems
 - **Workflow Orchestration**: Complex conversation flows are managed through a graph-based workflow system
 - **State Management**: Conversation state is maintained throughout the interaction process
 - **Modular Processing**: Individual processing steps are isolated and can be tested independently
+- **Error Resilience**: Graceful error handling and fallback mechanisms at every stage
+- **Performance Optimization**: Parallel processing and caching for optimal response times
+
+#### Advanced Capabilities
+- **Multi-turn Conversations**: Maintains context across multiple conversation turns with sophisticated memory management
+- **Intent Refinement**: Continuously improves intent classification based on user feedback and interaction patterns
+- **Dynamic Routing**: Intelligently routes conversations based on user intent, confidence scores, and available resources
+- **Quality Assurance**: Comprehensive validation of responses for accuracy, appropriateness, and safety
+
+#### Scalability Features
+- **Horizontal Scaling**: Engine instances can be distributed across multiple servers
+- **Load Balancing**: Intelligent distribution of conversation load across available engines
+- **Resource Management**: Efficient memory and CPU usage optimization for high-volume deployments
+- **Monitoring Integration**: Real-time performance monitoring and alerting capabilities
 - **Extensibility**: New processing nodes and workflows can be added without affecting existing functionality
 
 ### 1. LangGraph Engine Structure
@@ -1223,57 +1367,7 @@ The database schema is organized around core business entities with clear relati
 - **Key Fields**:
   - `id`: UUID primary key
   - `user_id`: Foreign key to users table
-  - `title`: Complaint summary
-  - `description`: Detailed complaint description
-  - `status`: Current status (submitted, in_progress, resolved, closed)
-  - `priority`: Priority level (low, medium, high, urgent)
-  - `metadata`: JSON field for additional complaint data
-- **Indexes**: User_id index, status index, priority index for filtering and reporting
-- **Relationships**: Belongs to user, may be referenced in conversations
-
-#### Schema Features
-
-**UUID Primary Keys**:
-- Global uniqueness across distributed systems
-- No sequential patterns for security
-- Efficient replication and merging
-- Future-proof for multi-database scenarios
-
-**JSON Metadata Fields**:
-- Flexible schema evolution without migrations
-- Efficient storage of semi-structured data
-- Native JSON querying capabilities in PostgreSQL
-- Indexing support for frequently accessed JSON keys
-
-**Vector Embeddings**:
-- Native vector storage using pgvector extension
-- Efficient similarity search with various distance metrics
-- Index support for high-performance vector operations
-- Integration with PostgreSQL's query optimizer
-
-```mermaid
-erDiagram
-    Users {
-        uuid id PK
-        string email UK
-        string name
-        string role
-        jsonb metadata
-        timestamp created_at
-        timestamp updated_at
-    }
-    
-    Conversations {
-        uuid id PK
-        uuid user_id FK
-        string title
-        string session_id
-        string type
-        jsonb metadata
-        timestamp created_at
-        timestamp updated_at
-    }
-    
+ 
     Messages {
         uuid id PK
         uuid conversation_id FK
@@ -1438,14 +1532,102 @@ graph TB
 
 ## API Architecture
 
+The API architecture implements a RESTful design with modern FastAPI capabilities, providing a clean, well-documented, and highly performant interface for all client interactions. The API design emphasizes consistency, security, and developer experience.
+
+### API Design Principles
+
+#### RESTful Design
+The University Chatbot API follows REST principles with clear resource identification, standard HTTP methods, and stateless interactions:
+
+- **Resource-Based URLs**: Clear, hierarchical URL structure representing system resources
+- **HTTP Methods**: Proper use of GET, POST, PUT, DELETE for different operations
+- **Status Codes**: Meaningful HTTP status codes for different response scenarios
+- **Content Negotiation**: Support for different content types and response formats
+
+#### API Standards
+- **Consistent Naming**: Snake_case for JSON fields, clear and descriptive endpoint names
+- **Versioning Strategy**: URL-based versioning for backward compatibility
+- **Error Handling**: Standardized error responses with detailed error information
+- **Documentation**: Automatic OpenAPI/Swagger documentation generation
+
+#### Performance Optimization
+- **Response Compression**: Automatic gzip compression for reduced bandwidth
+- **Caching Headers**: Appropriate cache control headers for different resource types
+- **Pagination**: Efficient pagination for large datasets
+- **Field Selection**: Allow clients to specify required fields to reduce payload size
+
 ### 1. API Structure
+
+The API is organized into logical groupings with clear separation of concerns and consistent patterns across all endpoints.
+
+#### Endpoint Categories
+
+**Authentication Endpoints (`/auth`)**:
+- **Purpose**: User authentication and session management
+- **Endpoints**:
+  - `POST /auth/login`: User login with email/password
+  - `POST /auth/refresh`: JWT token refresh
+  - `POST /auth/logout`: Session termination
+  - `GET /auth/me`: Current user information
+- **Security**: Public endpoints with rate limiting
+- **Response Format**: JWT tokens with user metadata
+
+**User Management Endpoints (`/users`)**:
+- **Purpose**: User profile and preference management
+- **Endpoints**:
+  - `GET /users/profile`: User profile information
+  - `PUT /users/profile`: Update user profile
+  - `GET /users/preferences`: User preference settings
+  - `PUT /users/preferences`: Update user preferences
+- **Security**: Authenticated endpoints with role-based access
+- **Data Privacy**: Personal data protection and GDPR compliance
+
+**Conversation Endpoints (`/conversations`)**:
+- **Purpose**: Chat interaction and conversation management
+- **Endpoints**:
+  - `POST /conversations`: Start new conversation
+  - `GET /conversations`: List user conversations
+  - `GET /conversations/{id}`: Get conversation details
+  - `POST /conversations/{id}/messages`: Send message
+  - `GET /conversations/{id}/messages`: Get conversation history
+- **Real-time**: WebSocket support for live chat
+- **Performance**: Optimized for high-frequency interactions
+
+**Document Endpoints (`/documents`)**:
+- **Purpose**: Document search and management
+- **Endpoints**:
+  - `GET /documents/search`: Semantic document search
+  - `POST /documents/upload`: Document upload (admin only)
+  - `GET /documents/{id}`: Get document details
+  - `DELETE /documents/{id}`: Delete document (admin only)
+- **Features**: Full-text search, semantic similarity, metadata filtering
+- **Access Control**: Role-based access with different permissions
+
+**Complaint Endpoints (`/complaints`)**:
+- **Purpose**: Complaint submission and tracking
+- **Endpoints**:
+  - `POST /complaints`: Submit new complaint
+  - `GET /complaints`: List user complaints
+  - `GET /complaints/{id}`: Get complaint details
+  - `PUT /complaints/{id}/status`: Update complaint status (admin only)
+- **Workflow**: Structured complaint processing with status tracking
+- **Notifications**: Automatic notifications for status changes
+
+**System Endpoints (`/system`)**:
+- **Purpose**: System health and operational information
+- **Endpoints**:
+  - `GET /health`: System health check
+  - `GET /metrics`: System performance metrics (admin only)
+  - `GET /info`: API version and build information
+- **Monitoring**: Integration with monitoring and alerting systems
+- **Public Access**: Health endpoints are publicly accessible
 
 ```mermaid
 graph TB
     subgraph "API Layer"
         subgraph "API Versioning"
             V1[API v1]
-            V2[API v2 (Future)]
+            V2["API v2 (Future)"]
         end
         
         subgraph "API Endpoints"
@@ -1457,11 +1639,20 @@ graph TB
             HEALTH[Health Check]
         end
         
-        subgraph "Middleware"
+        subgraph "Middleware Stack"
             CORS[CORS Middleware]
             AUTH_MW[Auth Middleware]
             RATE_LIMIT[Rate Limiting]
             LOGGING[Request Logging]
+            COMPRESSION[Response Compression]
+            VALIDATION[Request Validation]
+        end
+        
+        subgraph "Response Format"
+            JSON[JSON Responses]
+            ERRORS[Error Handling]
+            PAGINATION[Pagination]
+            METADATA[Response Metadata]
         end
     end
     
@@ -1475,9 +1666,170 @@ graph TB
     CORS --> AUTH_MW
     AUTH_MW --> RATE_LIMIT
     RATE_LIMIT --> LOGGING
+    LOGGING --> COMPRESSION
+    COMPRESSION --> VALIDATION
+    
+    AUTH --> JSON
+    USERS --> JSON
+    CONVERSATIONS --> JSON
+    DOCUMENTS --> JSON
+    COMPLAINTS --> JSON
+    HEALTH --> JSON
+    
+    JSON --> ERRORS
+    JSON --> PAGINATION
+    JSON --> METADATA
+```
+
+### 2. Middleware Architecture
+
+The middleware stack provides cross-cutting concerns that apply to all API requests, ensuring consistent security, logging, and performance optimization.
+
+#### Middleware Components
+
+**CORS (Cross-Origin Resource Sharing)**:
+- **Purpose**: Enable secure cross-origin requests from web browsers
+- **Configuration**: Configurable allowed origins, methods, and headers
+- **Security**: Prevents unauthorized cross-origin access
+- **Development**: Permissive settings for development, restrictive for production
+
+**Authentication Middleware**:
+- **JWT Processing**: Automatic JWT token validation and user context extraction
+- **Route Protection**: Configurable authentication requirements per endpoint
+- **Session Management**: User session tracking and timeout handling
+- **Error Handling**: Proper authentication error responses
+
+**Rate Limiting Middleware**:
+- **Algorithm**: Token bucket algorithm for smooth rate limiting
+- **Granularity**: Per-user, per-IP, and global rate limiting
+- **Customization**: Different limits for different endpoint categories
+- **Response Headers**: Rate limit information in response headers
+
+**Request Logging Middleware**:
+- **Structured Logging**: JSON-formatted logs with request context
+- **Performance Tracking**: Request timing and response size monitoring
+- **Error Logging**: Detailed error information for debugging
+- **Privacy**: Sensitive data filtering in logs
+
+**Response Compression**:
+- **Automatic Compression**: Gzip compression for responses above threshold
+- **Content Type Filtering**: Compression for text-based content types
+- **Performance**: Reduced bandwidth usage and faster responses
+- **Client Support**: Automatic detection of client compression support
+
+**Request Validation**:
+- **Pydantic Integration**: Automatic request body validation
+- **Type Safety**: Strong typing for all request and response models
+- **Error Messages**: Detailed validation error messages
+- **Security**: Input sanitization and validation for security
+
+### 3. Request/Response Patterns
+
+The API implements consistent patterns for request processing and response formatting, ensuring predictable and reliable interactions.
+
+#### Request Processing Flow
+
+**Request Lifecycle**:
+1. **Reception**: HTTP request received by FastAPI server
+2. **CORS Check**: Cross-origin request validation
+3. **Authentication**: JWT token validation and user context extraction
+4. **Rate Limiting**: Request rate validation and throttling
+5. **Validation**: Request body and parameter validation
+6. **Routing**: Request routing to appropriate endpoint handler
+7. **Business Logic**: Service layer processing
+8. **Response**: JSON response formatting and delivery
+
+**Error Handling Strategy**:
+- **Structured Errors**: Consistent error response format across all endpoints
+- **Error Codes**: Application-specific error codes in addition to HTTP status codes
+- **Detail Messages**: Human-readable error descriptions for debugging
+- **Validation Errors**: Detailed field-level validation error information
+
+**Response Format Standardization**:
+- **Success Responses**: Consistent success response structure
+- **Metadata**: Request ID, timestamp, and processing time in responses
+- **Pagination**: Standardized pagination format for list endpoints
+- **Links**: HATEOAS-style links for related resources where appropriate
+
+#### Response Format Examples
+
+**Standard Success Response**:
+```json
+{
+  "success": true,
+  "data": { /* response data */ },
+  "metadata": {
+    "request_id": "uuid",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "processing_time_ms": 150
+  }
+}
+```
+
+**Paginated Response**:
+```json
+{
+  "success": true,
+  "data": [/* array of items */],
+  "pagination": {
+    "page": 1,
+    "page_size": 20,
+    "total_items": 100,
+    "total_pages": 5
+  },
+  "metadata": { /* standard metadata */ }
+}
+```
+
+**Error Response**:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "details": [
+      {
+        "field": "email",
+        "message": "Invalid email format"
+      }
+    ]
+  },
+  "metadata": { /* standard metadata */ }
+}
 ```
 
 ### 2. Request/Response Flow
+
+The request/response flow demonstrates how HTTP requests are processed through the entire middleware stack and business logic layers, ensuring proper handling at every stage.
+
+#### Detailed Request Processing
+
+**Client Request Initiation**:
+- Client applications (web, mobile, API clients) send HTTP requests
+- Requests include authentication tokens, request bodies, and query parameters
+- Client libraries handle request formatting and error handling
+
+**Middleware Processing Pipeline**:
+1. **CORS Validation**: Check origin, methods, and headers against CORS policy
+2. **Request Parsing**: Parse HTTP headers, body, and query parameters
+3. **Authentication**: Validate JWT tokens and extract user context
+4. **Rate Limiting**: Check request rate against user/IP limits
+5. **Request Logging**: Log request details for monitoring and debugging
+6. **Input Validation**: Validate request structure using Pydantic models
+
+**Business Logic Execution**:
+- **Route Resolution**: FastAPI router determines appropriate handler
+- **Dependency Injection**: Inject required services and dependencies
+- **Service Processing**: Execute business logic through service layer
+- **Data Access**: Perform database operations through repository layer
+- **External Calls**: Interact with LLM providers and external services
+
+**Response Generation**:
+- **Result Formatting**: Format response according to API standards
+- **Metadata Addition**: Add request metadata and processing information
+- **Error Handling**: Convert exceptions to structured error responses
+- **Response Compression**: Compress response if beneficial and supported
 
 ```mermaid
 sequenceDiagram
@@ -1487,25 +1839,125 @@ sequenceDiagram
     participant Controller
     participant Service
     participant Repository
+    participant Provider
     
     Client->>Middleware: HTTP Request
-    Middleware->>Middleware: CORS Check
-    Middleware->>Middleware: Authentication
-    Middleware->>Middleware: Rate Limiting
+    Note over Middleware: CORS Check
+    Middleware->>Middleware: Validate Origin & Headers
+    
+    Note over Middleware: Authentication
+    Middleware->>Middleware: Validate JWT Token
+    Middleware->>Middleware: Extract User Context
+    
+    Note over Middleware: Rate Limiting
+    Middleware->>Middleware: Check Request Rate
+    
+    Note over Middleware: Request Validation
+    Middleware->>Middleware: Validate Request Structure
+    
     Middleware->>Router: Validated Request
     Router->>Controller: Route to Handler
-    Controller->>Service: Business Logic
+    
+    Note over Controller: Dependency Injection
+    Controller->>Service: Business Logic Call
+    
+    Note over Service: Process Business Rules
     Service->>Repository: Data Access
-    Repository-->>Service: Data
-    Service-->>Controller: Result
-    Controller-->>Router: Response
+    Repository->>Provider: External Service Call
+    Provider-->>Repository: Provider Response
+    Repository-->>Service: Data Result
+    Service-->>Controller: Service Result
+    
+    Note over Controller: Response Formatting
+    Controller-->>Router: Formatted Response
     Router-->>Middleware: HTTP Response
-    Middleware-->>Client: Final Response
+    
+    Note over Middleware: Response Processing
+    Middleware->>Middleware: Add Response Headers
+    Middleware->>Middleware: Compress if Needed
+    Middleware->>Middleware: Log Response
+    
+    Middleware-->>Client: Final HTTP Response
 ```
+
+#### Error Handling and Recovery
+
+**Error Classification**:
+- **Client Errors (4xx)**: Invalid requests, authentication failures, validation errors
+- **Server Errors (5xx)**: Internal failures, external service unavailability, database errors
+- **Business Logic Errors**: Domain-specific errors like insufficient permissions
+
+**Error Recovery Strategies**:
+- **Graceful Degradation**: Provide partial functionality when services are unavailable
+- **Automatic Retry**: Retry transient failures with exponential backoff
+- **Circuit Breaker**: Prevent cascading failures by temporarily disabling failing services
+- **Fallback Responses**: Provide default responses when primary processing fails
+
+**Error Monitoring and Alerting**:
+- **Error Rate Monitoring**: Track error rates and patterns across endpoints
+- **Alert Thresholds**: Automatic alerts when error rates exceed thresholds
+- **Error Logging**: Comprehensive error logging with context and stack traces
+- **User Feedback**: Error responses that help users understand and resolve issues
 
 ## Deployment Architecture
 
+The deployment architecture provides a comprehensive strategy for deploying the University Chatbot across different environments, from development to production. The architecture emphasizes scalability, reliability, and operational excellence through modern containerization and cloud-native practices.
+
+### Deployment Philosophy
+
+The deployment strategy is built around several core principles:
+
+- **Environment Parity**: Consistent deployment across development, staging, and production
+- **Infrastructure as Code**: Reproducible infrastructure through code and configuration
+- **Scalability**: Horizontal and vertical scaling capabilities for varying loads
+- - **Resilience**: High availability, fault tolerance, and disaster recovery
+- **Security**: Comprehensive security controls at every layer
+- **Monitoring**: Full observability into system performance and health
+
 ### 1. Container Architecture
+
+The containerized architecture provides consistent deployment across environments while maintaining optimal resource utilization and security isolation.
+
+#### Container Design Strategy
+
+**Multi-Stage Docker Build**:
+- **Base Stage**: Python runtime with system dependencies
+- **Dependencies Stage**: Python package installation and caching
+- **Application Stage**: Application code and configuration
+- **Production Stage**: Optimized runtime without development tools
+
+**Security Hardening**:
+- **Non-Root User**: Containers run with non-privileged user accounts
+- **Minimal Base Images**: Use slim/alpine images to reduce attack surface
+- **Security Scanning**: Automated vulnerability scanning in CI/CD pipeline
+- **Secrets Management**: External secrets injection, no hardcoded credentials
+
+**Resource Optimization**:
+- **Layer Caching**: Optimized Dockerfile for efficient layer caching
+- **Resource Limits**: CPU and memory limits for container scheduling
+- **Health Checks**: Container health checks for orchestrator integration
+- **Graceful Shutdown**: Proper signal handling for zero-downtime deployments
+
+#### Container Components
+
+**Application Container**:
+- **Base Image**: Python 3.10+ slim image for security and performance
+- **Application Code**: University Chatbot FastAPI application
+- **Configuration**: Environment-based configuration management
+- **Dependencies**: All Python dependencies and system packages
+- **Health Checks**: Built-in health check endpoints for container orchestration
+
+**Database Container (Development)**:
+- **PostgreSQL**: Official PostgreSQL image with pgvector extension
+- **Data Persistence**: Volume mounting for data persistence
+- **Configuration**: Custom PostgreSQL configuration for performance
+- **Initialization**: Database schema and seed data scripts
+- **Backup Integration**: Automated backup and restore capabilities
+
+**Supporting Containers**:
+- **Redis Cache**: Optional caching layer for improved performance
+- **Nginx Proxy**: Reverse proxy for load balancing and SSL termination
+- **Monitoring**: Prometheus, Grafana, and other monitoring tools
 
 ```mermaid
 graph TB
@@ -1514,216 +1966,804 @@ graph TB
             FASTAPI[FastAPI App]
             PYTHON[Python Runtime]
             DEPS[Dependencies]
+            CONFIG[Configuration]
+            HEALTH[Health Checks]
         end
         
         subgraph "Database Container"
             POSTGRES[PostgreSQL]
             PGVECTOR[pgvector Extension]
+            DATA[Data Persistence]
+            BACKUP[Backup Scripts]
         end
         
-        subgraph "Storage"
-            VOLUMES[Docker Volumes]
-            UPLOADS[Upload Directory]
-            DATA[Data Directory]
+        subgraph "Supporting Containers"
+            REDIS[Redis Cache]
+            NGINX[Nginx Proxy]
+            MONITORING[Monitoring Stack]
+        end
+        
+        subgraph "Storage Volumes"
+            DB_VOLUME[Database Volume]
+            UPLOAD_VOLUME[Upload Volume]
+            LOG_VOLUME[Log Volume]
+            CONFIG_VOLUME[Config Volume]
         end
     end
     
     subgraph "External Services"
         SUPABASE[Supabase Cloud]
         OPENAI[OpenAI API]
-        MONITORING[Monitoring Tools]
+        EXTERNAL_MONITORING[External Monitoring]
+        CDN[Content Delivery Network]
     end
     
     FASTAPI --> POSTGRES
+    FASTAPI --> REDIS
     FASTAPI --> SUPABASE
     FASTAPI --> OPENAI
-    FASTAPI --> MONITORING
     
-    POSTGRES --> VOLUMES
-    UPLOADS --> VOLUMES
-    DATA --> VOLUMES
+    NGINX --> FASTAPI
+    
+    POSTGRES --> DB_VOLUME
+    FASTAPI --> UPLOAD_VOLUME
+    MONITORING --> LOG_VOLUME
+    CONFIG --> CONFIG_VOLUME
+    
+    NGINX --> CDN
+    MONITORING --> EXTERNAL_MONITORING
 ```
 
 ### 2. Production Deployment
 
+The production deployment architecture ensures high availability, scalability, and security for serving real users in a university environment.
+
+#### Multi-Tier Architecture
+
+**Load Balancer Tier**:
+- **Primary Load Balancer**: Nginx or cloud-native load balancer
+- **SSL Termination**: TLS certificate management and termination
+- **Health Checks**: Upstream server health monitoring
+- **Traffic Distribution**: Intelligent traffic routing and load balancing
+- **Rate Limiting**: Global rate limiting and DDoS protection
+
+**Application Tier**:
+- **Container Orchestration**: Kubernetes or Docker Swarm for container management
+- **Auto-Scaling**: Horizontal pod autoscaling based on CPU and memory usage
+- **Rolling Deployments**: Zero-downtime deployments with health checks
+- **Service Discovery**: Automatic service registration and discovery
+- **Configuration Management**: ConfigMaps and Secrets for external configuration
+
+**Database Tier**:
+- **Primary Database**: High-performance PostgreSQL with pgvector
+- **Read Replicas**: Multiple read replicas for scaling read operations
+- **Connection Pooling**: PgBouncer for efficient connection management
+- **Backup Strategy**: Automated backups with point-in-time recovery
+- **Monitoring**: Database performance monitoring and alerting
+
+**Storage Tier**:
+- **Object Storage**: Cloud storage for documents and media files
+- **CDN Integration**: Global content delivery for static assets
+- **Backup Storage**: Separate backup storage for disaster recovery
+- **Archive Storage**: Long-term archival for compliance and audit
+
+#### High Availability Features
+
+**Redundancy and Failover**:
+- **Multiple Availability Zones**: Deployment across multiple data centers
+- **Database Clustering**: Primary-replica setup with automatic failover
+- **Application Instances**: Multiple application instances with load balancing
+- **Network Redundancy**: Multiple network paths and failover routing
+
+**Disaster Recovery**:
+- **Backup Strategy**: Regular backups with tested restore procedures
+- **Recovery Time Objective (RTO)**: Target recovery time under 1 hour
+- **Recovery Point Objective (RPO)**: Maximum 15 minutes of data loss
+- **Cross-Region Backup**: Backups stored in multiple geographic regions
+
+**Security Hardening**:
+- **Network Segmentation**: VPC with private subnets for application and database tiers
+- **Firewall Rules**: Strict firewall rules with minimal required ports
+- **Access Control**: Role-based access control for all infrastructure components
+- **Audit Logging**: Comprehensive audit logs for all system access and changes
+
 ```mermaid
 graph TB
-    subgraph "Load Balancer"
-        LB[Nginx/Traefik]
+    subgraph "External Access"
+        INTERNET[Internet]
+        CDN[Content Delivery Network]
+    end
+    
+    subgraph "Load Balancer Tier"
+        LB_PRIMARY[Primary Load Balancer]
+        LB_SECONDARY[Secondary Load Balancer]
+        SSL[SSL Termination]
     end
     
     subgraph "Application Tier"
-        APP1[App Instance 1]
-        APP2[App Instance 2]
-        APP3[App Instance N]
+        subgraph "Kubernetes Cluster"
+            APP1[App Pod 1]
+            APP2[App Pod 2]
+            APP3[App Pod N]
+            INGRESS[Ingress Controller]
+            HPA[Horizontal Pod Autoscaler]
+        end
     end
     
     subgraph "Database Tier"
-        PRIMARY[Primary DB]
-        REPLICA[Read Replica]
-        BACKUP[Backup Storage]
+        PRIMARY_DB[Primary Database]
+        REPLICA1[Read Replica 1]
+        REPLICA2[Read Replica 2]
+        PGBOUNCER[Connection Pooler]
+    end
+    
+    subgraph "Storage Tier"
+        OBJECT_STORAGE[Object Storage]
+        BACKUP_STORAGE[Backup Storage]
+        ARCHIVE[Archive Storage]
+    end
+    
+    subgraph "Monitoring & Operations"
+        PROMETHEUS[Prometheus]
+        GRAFANA[Grafana]
+        ALERTMANAGER[Alert Manager]
+        LOGS[Log Aggregation]
     end
     
     subgraph "External Services"
-        CDN[Content Delivery Network]
-        MONITORING[Monitoring & Logging]
-        SECRETS[Secret Management]
+        SUPABASE_CLOUD[Supabase Cloud]
+        AI_PROVIDERS[AI Providers]
+        NOTIFICATION[Notification Services]
     end
     
-    LB --> APP1
-    LB --> APP2
-    LB --> APP3
+    INTERNET --> CDN
+    CDN --> LB_PRIMARY
+    LB_PRIMARY --> LB_SECONDARY
+    LB_SECONDARY --> SSL
+    SSL --> INGRESS
     
-    APP1 --> PRIMARY
-    APP2 --> PRIMARY
-    APP3 --> PRIMARY
+    INGRESS --> APP1
+    INGRESS --> APP2
+    INGRESS --> APP3
     
-    APP1 --> REPLICA
-    APP2 --> REPLICA
-    APP3 --> REPLICA
+    HPA --> APP1
+    HPA --> APP2
+    HPA --> APP3
     
-    PRIMARY --> BACKUP
+    APP1 --> PGBOUNCER
+    APP2 --> PGBOUNCER
+    APP3 --> PGBOUNCER
     
-    CDN --> LB
-    MONITORING --> APP1
-    MONITORING --> APP2
-    MONITORING --> APP3
+    PGBOUNCER --> PRIMARY_DB
+    PGBOUNCER --> REPLICA1
+    PGBOUNCER --> REPLICA2
     
-    SECRETS --> APP1
-    SECRETS --> APP2
-    SECRETS --> APP3
+    PRIMARY_DB --> BACKUP_STORAGE
+    BACKUP_STORAGE --> ARCHIVE
+    
+    APP1 --> OBJECT_STORAGE
+    APP2 --> OBJECT_STORAGE
+    APP3 --> OBJECT_STORAGE
+    
+    APP1 --> SUPABASE_CLOUD
+    APP2 --> AI_PROVIDERS
+    APP3 --> NOTIFICATION
+    
+    PROMETHEUS --> GRAFANA
+    PROMETHEUS --> ALERTMANAGER
+    LOGS --> GRAFANA
 ```
+
+### Deployment Environments
+
+#### Development Environment
+- **Purpose**: Local development and feature testing
+- **Infrastructure**: Docker Compose with local containers
+- **Database**: Local PostgreSQL with sample data
+- **External Services**: Development API keys and sandbox environments
+- **Monitoring**: Basic logging and health checks
+
+#### Staging Environment
+- **Purpose**: Pre-production testing and validation
+- **Infrastructure**: Scaled-down production environment
+- **Database**: Production-like data with privacy protection
+- **External Services**: Staging/test environments where available
+- **Monitoring**: Full monitoring stack for testing
+
+#### Production Environment
+- **Purpose**: Live system serving university users
+- **Infrastructure**: Full high-availability deployment
+- **Database**: Production database with full redundancy
+- **External Services**: Production API keys and accounts
+- **Monitoring**: Comprehensive monitoring with 24/7 alerting
+
+### Operations and Maintenance
+
+#### Deployment Process
+- **CI/CD Pipeline**: Automated testing, building, and deployment
+- **Blue-Green Deployment**: Zero-downtime deployments with quick rollback
+- **Database Migrations**: Automated schema migrations with rollback capability
+- **Configuration Management**: Environment-specific configuration deployment
+
+#### Monitoring and Observability
+- **Application Metrics**: Performance, error rates, and business metrics
+- **Infrastructure Metrics**: Server resources, network, and storage performance
+- **Log Aggregation**: Centralized logging with search and analysis capabilities
+- **Distributed Tracing**: Request tracing across all system components
+
+#### Security Operations
+- **Vulnerability Management**: Regular security scanning and patching
+- **Access Management**: Regular access reviews and privilege management
+- **Incident Response**: Defined procedures for security incident handling
+- **Compliance Monitoring**: Continuous compliance monitoring and reporting
 
 ## Security Architecture
 
+The security architecture implements a comprehensive, multi-layered security approach that protects the University Chatbot system from various threats while ensuring data privacy, user authentication, and regulatory compliance. Security is integrated into every aspect of the system architecture.
+
+### Security Philosophy
+
+The security approach is built on fundamental principles of defense in depth, zero trust, and privacy by design:
+
+- **Defense in Depth**: Multiple security layers to prevent single points of failure
+- **Zero Trust**: Never trust, always verify - all access requires authentication and authorization
+- **Privacy by Design**: Data privacy considerations built into every system component
+- **Principle of Least Privilege**: Users and systems have minimal necessary permissions
+- **Security by Default**: Secure configurations and behaviors are the default state
+
 ### 1. Security Layers
+
+The security architecture implements security controls at multiple layers to ensure comprehensive protection against various threat vectors.
+
+#### Network Security Layer
+
+**Perimeter Security**:
+- **Web Application Firewall (WAF)**: Protection against OWASP Top 10 vulnerabilities
+- **DDoS Protection**: Cloud-based DDoS mitigation and rate limiting
+- **Intrusion Detection**: Network-based intrusion detection and prevention
+- **Geographic Blocking**: IP-based filtering for restricted regions
+- **Bot Protection**: Advanced bot detection and mitigation
+
+**Network Segmentation**:
+- **Virtual Private Cloud (VPC)**: Isolated network environment for the application
+- **Private Subnets**: Database and internal services isolated from public internet
+- **Security Groups**: Fine-grained firewall rules for each service tier
+- **Network ACLs**: Additional layer of network access control
+- **VPN Access**: Secure administrative access through VPN connections
+
+**Transport Security**:
+- **TLS 1.3**: Modern transport layer security for all communications
+- **Certificate Management**: Automated certificate provisioning and renewal
+- **HSTS Headers**: HTTP Strict Transport Security to prevent downgrade attacks
+- **Certificate Pinning**: Additional protection against certificate-based attacks
+
+#### Application Security Layer
+
+**Authentication and Authorization**:
+- **Multi-Factor Authentication (MFA)**: Optional MFA for enhanced security
+- **JWT Token Security**: Secure token generation, validation, and expiration
+- **Role-Based Access Control (RBAC)**: Fine-grained permissions based on user roles
+- **Session Management**: Secure session handling with timeout and revocation
+- **OAuth 2.0 Integration**: Support for external identity providers
+
+**Input Validation and Sanitization**:
+- **Schema Validation**: Pydantic-based request validation and type checking
+- **SQL Injection Prevention**: Parameterized queries and ORM usage
+- **XSS Protection**: Input sanitization and output encoding
+- **CSRF Protection**: Cross-site request forgery prevention tokens
+- **File Upload Security**: Virus scanning and file type validation
+
+**API Security**:
+- **Rate Limiting**: Protect against abuse and brute force attacks
+- **API Key Management**: Secure API key generation and rotation
+- **Request Signing**: Message integrity verification for critical operations
+- **CORS Configuration**: Strict cross-origin resource sharing policies
+- **API Versioning**: Secure deprecation and migration of API versions
+
+#### Data Security Layer
+
+**Data Encryption**:
+- **Encryption at Rest**: Database and file storage encryption using AES-256
+- **Encryption in Transit**: TLS encryption for all network communications
+- **Key Management**: Hardware security modules (HSM) for key protection
+- **Field-Level Encryption**: Additional encryption for sensitive data fields
+- **Backup Encryption**: Encrypted backups with separate key management
+
+**Data Privacy**:
+- **Personal Data Classification**: Identification and classification of personal data
+- **Data Minimization**: Collect and store only necessary data
+- **Anonymization**: Remove personally identifiable information where possible
+- **Pseudonymization**: Replace identifying data with pseudonyms
+- **Right to Erasure**: Capability to completely delete user data on request
+
+**Access Control**:
+- **Database Authentication**: Strong database authentication and access control
+- **Column-Level Security**: Fine-grained access control at the column level
+- **Audit Logging**: Comprehensive logging of all data access and modifications
+- **Data Loss Prevention (DLP)**: Prevent unauthorized data exfiltration
+- **Backup Security**: Secure backup storage with access controls
 
 ```mermaid
 graph TB
     subgraph "Security Layers"
         subgraph "Network Security"
-            FIREWALL[Firewall Rules]
+            WAF[Web Application Firewall]
+            DDOS[DDoS Protection]
             VPC[Virtual Private Cloud]
-            SSL[SSL/TLS Encryption]
+            FIREWALL[Firewall Rules]
+            TLS[TLS Encryption]
         end
         
-        subgraph "Authentication & Authorization"
-            JWT[JWT Tokens]
-            OAUTH[OAuth 2.0]
-            RBAC[Role-Based Access Control]
+        subgraph "Application Security"
+            AUTH[Authentication & Authorization]
+            VALIDATION[Input Validation]
+            RATE_LIMIT[Rate Limiting]
+            CSRF[CSRF Protection]
+            XSS[XSS Protection]
         end
         
         subgraph "Data Security"
             ENCRYPTION[Data Encryption]
-            HASHING[Password Hashing]
-            SANITIZATION[Input Sanitization]
+            ACCESS_CONTROL[Access Control]
+            PRIVACY[Data Privacy]
+            AUDIT[Audit Logging]
+            BACKUP[Backup Security]
         end
         
-        subgraph "API Security"
-            RATE_LIMITING[Rate Limiting]
-            CORS[CORS Policy]
-            VALIDATION[Input Validation]
+        subgraph "Infrastructure Security"
+            CONTAINER[Container Security]
+            SECRETS[Secret Management]
+            VULN[Vulnerability Management]
+            PATCH[Patch Management]
+            MONITORING[Security Monitoring]
+        end
+        
+        subgraph "Compliance & Governance"
+            GDPR[GDPR Compliance]
+            AUDIT_TRAIL[Audit Trail]
+            POLICIES[Security Policies]
+            TRAINING[Security Training]
+            INCIDENT[Incident Response]
         end
     end
     
-    subgraph "Monitoring & Compliance"
-        AUDIT[Audit Logging]
-        MONITORING[Security Monitoring]
-        COMPLIANCE[Compliance Checks]
-    end
+    WAF --> VPC
+    VPC --> FIREWALL
+    FIREWALL --> TLS
     
-    FIREWALL --> VPC
-    VPC --> SSL
+    AUTH --> VALIDATION
+    VALIDATION --> RATE_LIMIT
+    RATE_LIMIT --> CSRF
+    CSRF --> XSS
     
-    JWT --> OAUTH
-    OAUTH --> RBAC
+    ENCRYPTION --> ACCESS_CONTROL
+    ACCESS_CONTROL --> PRIVACY
+    PRIVACY --> AUDIT
+    AUDIT --> BACKUP
     
-    ENCRYPTION --> HASHING
-    HASHING --> SANITIZATION
+    CONTAINER --> SECRETS
+    SECRETS --> VULN
+    VULN --> PATCH
+    PATCH --> MONITORING
     
-    RATE_LIMITING --> CORS
-    CORS --> VALIDATION
-    
-    AUDIT --> MONITORING
-    MONITORING --> COMPLIANCE
+    GDPR --> AUDIT_TRAIL
+    AUDIT_TRAIL --> POLICIES
+    POLICIES --> TRAINING
+    TRAINING --> INCIDENT
 ```
 
-### 2. Authentication Flow
+### 2. Authentication and Authorization Flow
+
+The authentication and authorization system provides secure, scalable user management with support for various authentication methods and fine-grained access control.
+
+#### Authentication Process
+
+**Initial Authentication**:
+1. **User Credentials**: User provides email and password
+2. **Credential Validation**: Server validates credentials against user database
+3. **Multi-Factor Authentication**: Optional MFA verification step
+4. **Token Generation**: JWT token generated with user claims and permissions
+5. **Secure Storage**: Token stored securely on client with appropriate flags
+
+**Token-Based Authentication**:
+- **JWT Structure**: Header, payload, and signature with user information
+- **Token Expiration**: Short-lived access tokens with refresh token mechanism
+- **Token Validation**: Server validates token signature and expiration
+- **Token Refresh**: Automatic token refresh for seamless user experience
+- **Token Revocation**: Ability to revoke tokens for security incidents
+
+#### Authorization Model
+
+**Role-Based Access Control (RBAC)**:
+- **Student Role**: Access to chat, document search, and complaint submission
+- **Staff Role**: Access to user management and system monitoring
+- **Admin Role**: Full system access including configuration and user management
+- **System Role**: Service accounts for automated processes
+
+**Permission Model**:
+- **Resource-Based Permissions**: Permissions tied to specific resources
+- **Action-Based Permissions**: Permissions for specific actions (read, write, delete)
+- **Context-Aware Permissions**: Permissions based on context (time, location, device)
+- **Dynamic Permissions**: Permissions that change based on system state
+
+**Access Control Implementation**:
+- **Middleware Enforcement**: Authentication middleware validates all requests
+- **Decorator-Based Authorization**: Service method authorization using decorators
+- **Resource-Level Filtering**: Filter results based on user permissions
+- **Audit Logging**: Log all authorization decisions for compliance
 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant API
-    participant AuthService
+    participant API_Gateway
+    participant Auth_Service
     participant Database
-    participant JWTService
+    participant JWT_Service
+    participant Permission_Service
     
-    Client->>API: Login Request
-    API->>AuthService: Validate Credentials
-    AuthService->>Database: Check User
-    Database-->>AuthService: User Data
-    AuthService->>JWTService: Generate Token
-    JWTService-->>AuthService: JWT Token
-    AuthService-->>API: Authentication Result
-    API-->>Client: Token Response
+    Note over Client, Permission_Service: Initial Authentication
+    Client->>API_Gateway: Login Request (email/password)
+    API_Gateway->>Auth_Service: Validate Credentials
+    Auth_Service->>Database: Check User Credentials
+    Database-->>Auth_Service: User Data + Hashed Password
+    Auth_Service->>Auth_Service: Verify Password Hash
     
-    Note over Client: Subsequent Requests
-    Client->>API: Request + JWT Token
-    API->>JWTService: Validate Token
-    JWTService-->>API: Token Valid
-    API->>API: Process Request
-    API-->>Client: Response
+    alt MFA Enabled
+        Auth_Service-->>Client: MFA Challenge
+        Client->>Auth_Service: MFA Response
+        Auth_Service->>Auth_Service: Validate MFA
+    end
+    
+    Auth_Service->>JWT_Service: Generate Tokens
+    JWT_Service-->>Auth_Service: Access + Refresh Tokens
+    Auth_Service-->>API_Gateway: Authentication Success
+    API_Gateway-->>Client: Tokens + User Info
+    
+    Note over Client, Permission_Service: Subsequent Requests
+    Client->>API_Gateway: API Request + JWT Token
+    API_Gateway->>JWT_Service: Validate Token
+    JWT_Service-->>API_Gateway: Token Valid + User Claims
+    API_Gateway->>Permission_Service: Check Permissions
+    Permission_Service-->>API_Gateway: Permission Result
+    
+    alt Authorized
+        API_Gateway->>API_Gateway: Process Request
+        API_Gateway-->>Client: API Response
+    else Unauthorized
+        API_Gateway-->>Client: 403 Forbidden
+    end
 ```
+
+### Security Monitoring and Incident Response
+
+#### Security Monitoring
+
+**Real-Time Monitoring**:
+- **Anomaly Detection**: Machine learning-based detection of unusual patterns
+- **Failed Authentication Tracking**: Monitor and alert on authentication failures
+- **Suspicious Activity Detection**: Identify potential security threats
+- **Performance Impact Monitoring**: Track security control performance impact
+
+**Security Information and Event Management (SIEM)**:
+- **Log Aggregation**: Centralized collection of security logs
+- **Correlation Rules**: Automated correlation of security events
+- **Threat Intelligence**: Integration with threat intelligence feeds
+- **Incident Prioritization**: Automated prioritization of security incidents
+
+**Compliance Monitoring**:
+- **Policy Compliance**: Continuous monitoring of security policy compliance
+- **Regulatory Compliance**: GDPR, CCPA, and other regulatory requirement tracking
+- **Audit Trail Integrity**: Ensure audit logs are complete and tamper-proof
+- **Access Review**: Regular review of user access and permissions
+
+#### Incident Response
+
+**Incident Response Plan**:
+- **Incident Classification**: Categorization of security incidents by severity
+- **Response Procedures**: Step-by-step procedures for different incident types
+- **Communication Plan**: Internal and external communication procedures
+- **Recovery Procedures**: System recovery and business continuity procedures
+
+**Automated Response**:
+- **Account Lockout**: Automatic lockout for suspicious authentication attempts
+- **IP Blocking**: Temporary blocking of suspicious IP addresses
+- **Rate Limiting**: Dynamic rate limiting during attacks
+- **Alert Escalation**: Automated escalation of critical security alerts
+
+### Privacy and Compliance
+
+#### Data Privacy Framework
+
+**Privacy by Design**:
+- **Data Minimization**: Collect only necessary data for system functionality
+- **Purpose Limitation**: Use data only for stated purposes
+- **Consent Management**: Clear consent mechanisms for data collection
+- **Data Subject Rights**: Support for access, rectification, and erasure requests
+
+**GDPR Compliance**:
+- **Lawful Basis**: Clear lawful basis for all data processing activities
+- **Data Protection Impact Assessment**: Regular assessment of privacy risks
+- **Data Breach Notification**: Procedures for breach notification within 72 hours
+- **Data Protection Officer**: Designated data protection officer for compliance
+
+**Cross-Border Data Transfer**:
+- **Data Residency**: Control over where data is stored and processed
+- **Transfer Mechanisms**: Appropriate safeguards for international transfers
+- **Third-Party Assessments**: Regular assessment of third-party data processors
+- **Contractual Safeguards**: Strong contractual protections for data transfers
 
 ## Monitoring and Observability
 
+The monitoring and observability framework provides comprehensive visibility into the University Chatbot system's performance, health, and behavior. This framework enables proactive issue detection, performance optimization, and reliable system operations through structured logging, metrics collection, and distributed tracing.
+
+### Observability Philosophy
+
+The observability approach is built on the three pillars of observability - logs, metrics, and traces - with additional focus on business intelligence and user experience monitoring:
+
+- **Proactive Monitoring**: Detect issues before they impact users
+- **Data-Driven Decisions**: Use telemetry data for optimization and planning
+- **Full Stack Visibility**: Monitor from user experience to infrastructure
+- **Real-Time Alerting**: Immediate notification of critical issues
+- **Historical Analysis**: Long-term trend analysis and capacity planning
+
 ### 1. Monitoring Architecture
+
+The monitoring architecture implements a modern observability stack that scales with the system and provides insights at multiple levels of abstraction.
+
+#### Monitoring Stack Components
+
+**Metrics Collection (Prometheus)**:
+- **Time Series Database**: Efficient storage and querying of numerical metrics
+- **Pull-Based Model**: Scrapes metrics from application and infrastructure endpoints
+- **Service Discovery**: Automatic discovery of services to monitor
+- **Alerting Rules**: Define conditions for generating alerts
+- **High Availability**: Clustered deployment for reliability
+
+**Visualization (Grafana)**:
+- **Dashboard Creation**: Custom dashboards for different audiences and use cases
+- **Data Source Integration**: Connect to multiple data sources (Prometheus, logs, traces)
+- **Alerting Interface**: Visual alert management and notification configuration
+- **User Management**: Role-based access to different dashboards and data
+- **Template Variables**: Dynamic dashboards that adapt to different environments
+
+**Log Aggregation (ELK Stack)**:
+- **Elasticsearch**: Distributed search and analytics engine for log data
+- **Logstash**: Data processing pipeline for log ingestion and transformation
+- **Kibana**: Visualization and exploration interface for log data
+- **Filebeat**: Lightweight log shipper for collecting and forwarding logs
+
+**Distributed Tracing (Jaeger)**:
+- **Request Tracing**: End-to-end request tracing across service boundaries
+- **Performance Analysis**: Identify bottlenecks and optimize request paths
+- **Error Tracking**: Trace errors back to their origin across multiple services
+- **Dependency Mapping**: Visualize service dependencies and communication patterns
+
+**Application Performance Monitoring (APM)**:
+- **Code-Level Insights**: Monitor application performance at the code level
+- **Database Monitoring**: Track database query performance and optimization
+- **External Service Monitoring**: Monitor integrations with third-party services
+- **Real User Monitoring**: Track actual user experience and performance
 
 ```mermaid
 graph TB
-    subgraph "Application Monitoring"
-        LOGS[Structured Logging]
-        METRICS[Application Metrics]
-        TRACES[Distributed Tracing]
-        HEALTH[Health Checks]
+    subgraph "Application Layer"
+        APP1[App Instance 1]
+        APP2[App Instance 2]
+        APP3[App Instance N]
+        
+        subgraph "Instrumentation"
+            METRICS[Metrics Endpoint]
+            LOGS[Structured Logging]
+            TRACES[Tracing]
+            HEALTH[Health Checks]
+        end
     end
     
-    subgraph "Infrastructure Monitoring"
-        SYSTEM[System Metrics]
-        DOCKER[Container Metrics]
-        NETWORK[Network Monitoring]
-        DATABASE[Database Monitoring]
+    subgraph "Infrastructure Layer"
+        subgraph "System Metrics"
+            CPU[CPU Metrics]
+            MEMORY[Memory Metrics]
+            DISK[Disk Metrics]
+            NETWORK[Network Metrics]
+        end
+        
+        subgraph "Container Metrics"
+            DOCKER[Docker Stats]
+            K8S[Kubernetes Metrics]
+        end
+        
+        subgraph "Database Metrics"
+            DB_PERF[DB Performance]
+            DB_CONN[Connection Pool]
+            DB_QUERIES[Query Metrics]
+        end
     end
     
     subgraph "Monitoring Stack"
         PROMETHEUS[Prometheus]
         GRAFANA[Grafana]
+        ELASTICSEARCH[Elasticsearch]
+        KIBANA[Kibana]
+        JAEGER[Jaeger]
         ALERTMANAGER[Alert Manager]
-        JAEGER[Jaeger Tracing]
     end
     
-    subgraph "Alerting"
+    subgraph "Alerting Channels"
         EMAIL[Email Alerts]
         SLACK[Slack Notifications]
+        PAGERDUTY[PagerDuty]
         WEBHOOK[Webhook Alerts]
     end
     
-    LOGS --> PROMETHEUS
+    subgraph "External Monitoring"
+        UPTIME[Uptime Monitoring]
+        SYNTHETICS[Synthetic Monitoring]
+        RUM[Real User Monitoring]
+    end
+    
+    APP1 --> METRICS
+    APP2 --> LOGS
+    APP3 --> TRACES
+    
     METRICS --> PROMETHEUS
+    LOGS --> ELASTICSEARCH
     TRACES --> JAEGER
     HEALTH --> PROMETHEUS
     
-    SYSTEM --> PROMETHEUS
-    DOCKER --> PROMETHEUS
+    CPU --> PROMETHEUS
+    MEMORY --> PROMETHEUS
+    DISK --> PROMETHEUS
     NETWORK --> PROMETHEUS
-    DATABASE --> PROMETHEUS
+    
+    DOCKER --> PROMETHEUS
+    K8S --> PROMETHEUS
+    
+    DB_PERF --> PROMETHEUS
+    DB_CONN --> PROMETHEUS
+    DB_QUERIES --> PROMETHEUS
     
     PROMETHEUS --> GRAFANA
     PROMETHEUS --> ALERTMANAGER
+    ELASTICSEARCH --> KIBANA
+    
     ALERTMANAGER --> EMAIL
     ALERTMANAGER --> SLACK
+    ALERTMANAGER --> PAGERDUTY
     ALERTMANAGER --> WEBHOOK
+    
+    UPTIME --> GRAFANA
+    SYNTHETICS --> GRAFANA
+    RUM --> GRAFANA
 ```
+
+### 2. Metrics and KPIs
+
+The system tracks comprehensive metrics across multiple dimensions to provide full visibility into system behavior and business outcomes.
+
+#### Application Metrics
+
+**Performance Metrics**:
+- **Response Time**: API endpoint response times with percentile distributions
+- **Throughput**: Requests per second for each endpoint and overall system
+- **Error Rate**: Error percentage with breakdown by error type and endpoint
+- **Availability**: System uptime and availability measurements
+- **Resource Utilization**: CPU, memory, and network usage across all components
+
+**Business Metrics**:
+- **Conversation Volume**: Number of conversations per time period
+- **User Engagement**: Active users, session duration, and repeat usage
+- **Document Usage**: Document search frequency and success rates
+- **Complaint Processing**: Complaint submission and resolution metrics
+- **Feature Adoption**: Usage statistics for different system features
+
+**AI/ML Metrics**:
+- **Model Performance**: Response quality, accuracy, and relevance scores
+- **LLM Usage**: Token usage, cost per conversation, and model selection
+- **Embedding Quality**: Vector search accuracy and relevance scores
+- **Processing Time**: Time spent in different stages of conversation processing
+- **Confidence Scores**: Distribution of confidence scores for generated responses
+
+#### Infrastructure Metrics
+
+**System Resource Metrics**:
+- **CPU Utilization**: Per-core and aggregate CPU usage across all instances
+- **Memory Usage**: Available memory, memory pressure, and swap usage
+- **Disk I/O**: Read/write operations, disk space usage, and I/O wait times
+- **Network Traffic**: Inbound/outbound traffic, packet loss, and latency
+
+**Database Metrics**:
+- **Query Performance**: Query execution times, slow query identification
+- **Connection Pool**: Active connections, connection pool utilization
+- **Database Size**: Table sizes, index usage, and storage growth
+- **Backup Status**: Backup success/failure rates and backup duration
+
+**Container Metrics**:
+- **Container Health**: Container status, restart counts, and health check results
+- **Resource Limits**: CPU and memory limit utilization per container
+- **Image Security**: Vulnerability counts and security scan results
+- **Deployment Metrics**: Deployment frequency, success rates, and rollback counts
+
+#### User Experience Metrics
+
+**Frontend Performance**:
+- **Page Load Time**: Complete page load times for web interface
+- **Time to Interactive**: Time until page becomes fully interactive
+- **Core Web Vitals**: Largest Contentful Paint, First Input Delay, Cumulative Layout Shift
+- **JavaScript Errors**: Client-side error rates and error types
+
+**API Performance**:
+- **API Response Time**: Response times for different API endpoints
+- **API Success Rate**: Success rates with breakdown by endpoint
+- **Rate Limiting**: Rate limit hit rates and throttling effectiveness
+- **Authentication Performance**: Login success rates and authentication timing
+
+### Alerting and Incident Management
+
+#### Alert Configuration
+
+**Severity Levels**:
+- **Critical**: Immediate response required, system unavailable or data loss
+- **High**: Significant impact on users, degraded performance or functionality
+- **Medium**: Minor issues that may impact some users or operations
+- **Low**: Informational alerts for trend monitoring and optimization
+
+**Alert Types**:
+- **Threshold Alerts**: Triggered when metrics exceed defined thresholds
+- **Anomaly Detection**: Machine learning-based detection of unusual patterns
+- **Composite Alerts**: Complex alerts based on multiple conditions
+- **Trend Alerts**: Alerts based on metric trends over time periods
+
+**Alert Routing**:
+- **Escalation Policies**: Automatic escalation based on severity and response time
+- **On-Call Rotation**: Support for on-call schedules and rotation management
+- **Channel Routing**: Different alert types routed to appropriate communication channels
+- **Alert Suppression**: Intelligent alert suppression during maintenance windows
+
+#### Incident Response Integration
+
+**Incident Management Workflow**:
+1. **Alert Generation**: Monitoring system generates alert based on defined conditions
+2. **Incident Creation**: Automatic incident creation in incident management system
+3. **Notification**: Immediate notification to on-call personnel through multiple channels
+4. **Acknowledgment**: Incident acknowledgment and ownership assignment
+5. **Investigation**: Guided investigation using monitoring data and runbooks
+6. **Resolution**: Incident resolution with post-mortem analysis and learning
+
+**Runbook Automation**:
+- **Automated Diagnostics**: Automatic collection of diagnostic information
+- **Remediation Scripts**: Automated execution of common remediation steps
+- **Escalation Procedures**: Clear procedures for escalating complex issues
+- **Communication Templates**: Standardized communication for different incident types
+
+### Performance Optimization and Capacity Planning
+
+#### Performance Analysis
+
+**Bottleneck Identification**:
+- **Resource Contention**: Identify CPU, memory, or I/O bottlenecks
+- **Database Performance**: Slow query identification and optimization opportunities
+- **External Dependencies**: Monitor performance of external services and APIs
+- **Network Latency**: Identify network-related performance issues
+
+**Trend Analysis**:
+- **Growth Patterns**: Analyze usage growth and predict future resource needs
+- **Seasonal Variations**: Identify patterns in usage based on academic calendar
+- **Performance Degradation**: Track performance changes over time
+- **Optimization Impact**: Measure the impact of performance optimizations
+
+#### Capacity Planning
+
+**Resource Forecasting**:
+- **Traffic Prediction**: Predict future traffic based on historical patterns
+- **Resource Requirements**: Calculate required resources for different growth scenarios
+- **Scaling Triggers**: Define thresholds for automatic and manual scaling
+- **Cost Optimization**: Balance performance requirements with cost considerations
+
+**Proactive Scaling**:
+- **Auto-Scaling Policies**: Configure automatic scaling based on metrics
+- **Predictive Scaling**: Use machine learning to predict and prepare for traffic spikes
+- **Load Testing**: Regular load testing to validate system capacity
+- **Disaster Recovery**: Capacity planning for disaster recovery scenarios
 
 ## Performance Considerations
 
