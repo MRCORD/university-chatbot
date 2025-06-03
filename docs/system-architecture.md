@@ -1,548 +1,92 @@
+
 # University Chatbot - System Architecture
 
 ## Overview
 
-This document provides a comprehensive architectural overview of the University Chatbot system, featuring a provider-agnostic, microservices-inspired design with clean separation of concerns, dependency injection, and extensible interfaces.
+The University Chatbot uses a layered, provider-agnostic architecture that separates concerns and enables easy swapping of external services through configuration.
 
-### System Philosophy
-
-The University Chatbot is built on the principle of **provider agnosticism**, meaning the system is designed to work with multiple different providers for each component (LLM providers, databases, storage solutions, etc.) without requiring architectural changes. This approach provides several key benefits:
-
-1. **Vendor Independence**: No lock-in to specific services or providers
-2. **Future-Proofing**: Easy adoption of new technologies as they emerge
-3. **Cost Optimization**: Ability to choose the most cost-effective solutions
-4. **Risk Mitigation**: Fallback options if primary providers become unavailable
-
-### Core Design Principles
-
-- **Clean Architecture**: Clear separation between business logic, data access, and external integrations
-- **SOLID Principles**: Single responsibility, open/closed, Liskov substitution, interface segregation, and dependency inversion
-- **Dependency Injection**: Loose coupling through dependency injection container
-- **Interface-Driven Design**: All external dependencies are abstracted behind interfaces
-- **Configuration-Based**: Provider selection through configuration, not code changes
-
-### Technology Stack
-
-- **Backend Framework**: FastAPI (Python) - High-performance async web framework
-- **Conversation Engine**: LangGraph - Advanced workflow orchestration for AI agents
-- **Database**: PostgreSQL with pgvector - Relational database with vector search capabilities
-- **LLM Provider**: OpenAI GPT models - Primary language model provider
-- **Vector Database**: pgvector - PostgreSQL extension for vector operations
-- **Cloud Services**: Supabase - Backend-as-a-service for database and storage
-- **Containerization**: Docker - Application containerization and deployment
-
-## Table of Contents
-
-1. [High-Level Architecture](#high-level-architecture)
-2. [Core Components](#core-components)
-3. [Data Flow](#data-flow)
-4. [Conversation Engine Architecture](#conversation-engine-architecture)
-5. [Provider System](#provider-system)
-6. [Service Layer](#service-layer)
-7. [Database Architecture](#database-architecture)
-8. [API Architecture](#api-architecture)
-9. [Deployment Architecture](#deployment-architecture)
-10. [Security Architecture](#security-architecture)
-
-## High-Level Architecture
-
-The University Chatbot follows a layered architecture pattern with clear separation of concerns and well-defined interfaces between components. The system is designed to handle thousands of concurrent users while maintaining high availability and performance.
-
-### Architectural Layers
-
-#### 1. Client Layer
-The client layer represents all possible interfaces that users can utilize to interact with the chatbot:
-
-- **Web Interface**: Browser-based chat interface for desktop users
-- **API Clients**: Direct API integration for custom applications
-- **Mobile Apps**: Native mobile applications for iOS and Android
-
-This layer is completely decoupled from the business logic, allowing for multiple client implementations without affecting the core system.
-
-#### 2. API Gateway Layer
-The API Gateway serves as the single entry point for all client requests:
-
-- **FastAPI Application**: High-performance Python web framework with automatic API documentation
-- **Middleware Layer**: Cross-cutting concerns like CORS, authentication, rate limiting, and request logging
-- **API Router**: Routes requests to appropriate service handlers with proper validation
-
-#### 3. Business Logic Layer
-This layer contains the core intelligence and orchestration capabilities of the system:
-
-**Services Sublayer**:
-- **User Service**: User management, authentication, and profile operations
-- **Conversation Service**: Chat orchestration and conversation flow management
-- **Document Service**: Document processing, indexing, and retrieval
-- **Complaint Service**: Complaint submission, processing, and tracking
-- **Embedding Service**: Text embedding generation for semantic search
-
-**Conversation Engine Sublayer**:
-- **Engine Factory**: Provider-agnostic engine instantiation and management
-- **LangGraph Engine**: Current implementation using LangGraph for workflow orchestration
-- **Mock Engine**: Development and testing implementation
-
-#### 4. Data Access Layer
-The repository pattern is implemented to abstract database operations:
-
-- **User Repository**: User data persistence and retrieval
-- **Conversation Repository**: Chat history and session management
-- **Document Repository**: Document metadata and content storage
-- **Complaint Repository**: Complaint data management
-- **Vector Repository**: Vector embedding storage and similarity search
-
-#### 5. Provider Layer
-This layer implements the provider pattern for external service integration:
-
-- **LLM Providers**: OpenAI, Anthropic, and other language model providers
-- **Database Providers**: Supabase, PostgreSQL, and other database systems
-- **Storage Providers**: File storage solutions like Supabase Storage or AWS S3
-- **Vector Providers**: Vector database implementations like pgvector or Pinecone
-
-The University Chatbot system follows a layered architecture pattern with clear separation of concerns, enabling maintainability, scalability, and testability. The architecture is designed around the principle of **provider agnosticism**, allowing for easy swapping of external services and implementations.
-
-### Architectural Layers Overview
-
-The system is organized into five distinct layers, each with specific responsibilities:
-
-1. **Client Layer**: User-facing interfaces and applications
-2. **API Gateway**: Request routing, middleware, and protocol handling
-3. **Business Logic Layer**: Core application logic and conversation processing
-4. **Data Access Layer**: Database operations and data persistence
-5. **Provider Layer**: External service integrations and abstractions
-
-### Architectural Layers
-
-#### 1. Client Layer
-The client layer represents all possible interfaces that users can utilize to interact with the chatbot:
-
-- **Web Interface**: Browser-based chat interface for desktop users
-- **API Clients**: Direct API integration for custom applications  
-- **Mobile Apps**: Native mobile applications for iOS and Android
-
-This layer is completely decoupled from the business logic, allowing for multiple client implementations without affecting the core system.
-
-#### 2. API Gateway Layer
-The API Gateway serves as the single entry point for all client requests:
-
-- **FastAPI Application**: High-performance Python web framework with automatic API documentation
-- **Middleware Layer**: Cross-cutting concerns like CORS, authentication, rate limiting, and request logging
-- **API Router**: Routes requests to appropriate service handlers with proper validation
-
-#### 3. Business Logic Layer
-This layer contains the core intelligence and orchestration capabilities of the system:
-
-**Services Sublayer**:
-- **User Service**: User management, authentication, and profile operations
-- **Conversation Service**: Chat orchestration and conversation flow management
-- **Document Service**: Document processing, indexing, and retrieval
-- **Complaint Service**: Complaint submission, processing, and tracking
-- **Embedding Service**: Text embedding generation for semantic search
-
-**Conversation Engine Sublayer**:
-- **Engine Factory**: Provider-agnostic engine instantiation and management
-- **LangGraph Engine**: Current implementation using LangGraph for workflow orchestration
-- **Mock Engine**: Development and testing implementation
-
-#### 4. Data Access Layer
-The repository pattern is implemented to abstract database operations:
-
-- **User Repository**: User data persistence and retrieval
-- **Conversation Repository**: Chat history and session management
-- **Document Repository**: Document metadata and content storage
-- **Complaint Repository**: Complaint data management
-- **Vector Repository**: Vector embedding storage and similarity search
-
-#### 5. Provider Layer
-This layer implements the provider pattern for external service integration:
-
-- **LLM Providers**: OpenAI, Anthropic, and other language model providers
-- **Database Providers**: Supabase, PostgreSQL, and other database systems
-- **Storage Providers**: File storage solutions like Supabase Storage or AWS S3
-- **Vector Providers**: Vector database implementations like pgvector or Pinecone
-
-### Key Architectural Principles
-
-- **Dependency Inversion**: High-level modules don't depend on low-level modules; both depend on abstractions
-- **Single Responsibility**: Each component has a single, well-defined purpose
-- **Open/Closed Principle**: System is open for extension but closed for modification
-- **Interface Segregation**: Clients depend only on interfaces they use
-- **Loose Coupling**: Components are minimally dependent on each other
+## Architecture Layers
 
 ```mermaid
 graph TB
     subgraph "Client Layer"
         WEB[Web Interface]
-        API_CLIENT[API Clients]
-        MOBILE[Mobile Apps]
+        API[API Clients]
     end
     
     subgraph "API Gateway"
         FASTAPI[FastAPI Application]
-        MIDDLEWARE[Middleware Layer]
-        ROUTER[API Router]
     end
     
-    subgraph "Business Logic Layer"
-        subgraph "Services"
-            USER_SVC[User Service]
-            CONV_SVC[Conversation Service]
-            DOC_SVC[Document Service]
-            COMPLAINT_SVC[Complaint Service]
-            EMBED_SVC[Embedding Service]
-        end
-        
-        subgraph "Conversation Engine"
-            ENGINE_FACTORY[Engine Factory]
-            LANGGRAPH_ENGINE[LangGraph Engine]
-            MOCK_ENGINE[Mock Engine]
-        end
+    subgraph "Business Logic"
+        SERVICES[Services]
+        ENGINE[LangGraph Engine]
     end
     
-    subgraph "Data Access Layer"
-        subgraph "Repositories"
-            USER_REPO[User Repository]
-            CONV_REPO[Conversation Repository]
-            DOC_REPO[Document Repository]
-            COMPLAINT_REPO[Complaint Repository]
-            VECTOR_REPO[Vector Repository]
-        end
+    subgraph "Data Access"
+        REPOS[Repositories]
     end
     
-    subgraph "Provider Layer"
-        subgraph "LLM Providers"
-            OPENAI[OpenAI Provider]
-            ANTHROPIC[Anthropic Provider]
-        end
-        
-        subgraph "Database Providers"
-            SUPABASE_DB[Supabase Provider]
-            POSTGRES[PostgreSQL]
-        end
-        
-        subgraph "Storage Providers"
-            SUPABASE_STORAGE[Supabase Storage]
-            S3[AWS S3]
-        end
-        
-        subgraph "Vector Providers"
-            PGVECTOR[pgvector]
-            PINECONE[Pinecone]
-        end
-    end
-    
-    subgraph "External Services"
-        LLM_API[LLM APIs]
-        VECTOR_DB[Vector Database]
-        FILE_STORAGE[File Storage]
+    subgraph "Providers"
+        LLM[LLM]
+        DB[Database]
+        STORAGE[Storage]
+        VECTOR[Vector DB]
     end
     
     WEB --> FASTAPI
-    API_CLIENT --> FASTAPI
-    MOBILE --> FASTAPI
-    
-    FASTAPI --> MIDDLEWARE
-    MIDDLEWARE --> ROUTER
-    ROUTER --> USER_SVC
-    ROUTER --> CONV_SVC
-    ROUTER --> DOC_SVC
-    ROUTER --> COMPLAINT_SVC
-    
-    USER_SVC --> USER_REPO
-    CONV_SVC --> CONV_REPO
-    CONV_SVC --> ENGINE_FACTORY
-    DOC_SVC --> DOC_REPO
-    DOC_SVC --> EMBED_SVC
-    COMPLAINT_SVC --> COMPLAINT_REPO
-    
-    ENGINE_FACTORY --> LANGGRAPH_ENGINE
-    ENGINE_FACTORY --> MOCK_ENGINE
-    
-    USER_REPO --> SUPABASE_DB
-    CONV_REPO --> SUPABASE_DB
-    DOC_REPO --> SUPABASE_DB
-    COMPLAINT_REPO --> SUPABASE_DB
-    VECTOR_REPO --> PGVECTOR
-    
-    LANGGRAPH_ENGINE --> OPENAI
-    LANGGRAPH_ENGINE --> ANTHROPIC
-    EMBED_SVC --> OPENAI
-    
-    SUPABASE_DB --> POSTGRES
-    SUPABASE_STORAGE --> FILE_STORAGE
-    OPENAI --> LLM_API
-    PGVECTOR --> VECTOR_DB
+    API --> FASTAPI
+    FASTAPI --> SERVICES
+    SERVICES --> ENGINE
+    SERVICES --> REPOS
+    REPOS --> DB
+    REPOS --> VECTOR
+    SERVICES --> STORAGE
+    ENGINE --> LLM
 ```
-
-### Layer-by-Layer Analysis
-
-#### 1. Client Layer
-The client layer encompasses all user-facing interfaces that interact with the chatbot system. This includes:
-
-- **Web Interface**: Browser-based chat interface for desktop users
-- **API Clients**: Direct API consumers like mobile applications or third-party integrations
-- **Mobile Apps**: Native mobile applications for iOS and Android platforms
-
-All client interfaces communicate with the system through standardized REST APIs, ensuring consistent behavior across different platforms.
-
-#### 2. API Gateway
-The API Gateway serves as the single entry point for all client requests, implementing cross-cutting concerns:
-
-- **FastAPI Application**: Modern, high-performance Python web framework providing automatic API documentation and validation
-- **Middleware Layer**: Handles CORS, authentication, rate limiting, and request logging
-- **API Router**: Routes requests to appropriate service endpoints based on URL patterns and HTTP methods
-
-#### 3. Business Logic Layer
-This layer contains the core application logic and is divided into two main subsystems:
-
-**Services Subsystem:**
-- **User Service**: Manages user authentication, profiles, and permissions
-- **Conversation Service**: Orchestrates chat interactions and maintains conversation context
-- **Document Service**: Handles document ingestion, processing, and retrieval
-- **Complaint Service**: Manages complaint submission and processing workflows
-- **Embedding Service**: Generates and manages vector embeddings for semantic search
-
-**Conversation Engine Subsystem:**
-- **Engine Factory**: Creates and manages different conversation engine implementations
-- **LangGraph Engine**: Primary conversation engine using LangGraph for workflow orchestration
-- **Mock Engine**: Testing and development engine for isolated testing scenarios
-
-#### 4. Data Access Layer
-The repository pattern is implemented to abstract database operations:
-
-- **User Repository**: User data persistence and retrieval
-- **Conversation Repository**: Chat history and session management
-- **Document Repository**: Document metadata and content storage
-- **Complaint Repository**: Complaint data management
-- **Vector Repository**: Vector embedding storage and similarity search
-
-#### 5. Provider Layer
-This layer implements the provider pattern for external service integration:
-
-- **LLM Providers**: OpenAI, Anthropic, and other language model providers
-- **Database Providers**: Supabase, PostgreSQL, and other database systems
-- **Storage Providers**: File storage solutions like Supabase Storage or AWS S3
-- **Vector Providers**: Vector database implementations like pgvector or Pinecone
 
 ## Core Components
 
-The core components of the University Chatbot system are designed around modularity, testability, and extensibility. Each component has a well-defined interface and responsibility, enabling independent development and testing.
+### LangGraph Conversation Engine
+- Graph-based workflow orchestration
+- Multi-turn conversation state management
+- Intent classification and routing
 
-### 1. Application Layer
+### Services Layer  
+- **User Service**: Authentication and profiles
+- **Conversation Service**: Chat orchestration
+- **Document Service**: Document processing and search
 
-The application layer serves as the foundation of the system, handling application lifecycle, configuration management, and dependency injection. This layer is responsible for bootstrapping the entire system and ensuring all components are properly initialized and configured.
+### Repository Layer
+- Data access abstraction
+- Database operations
+- Vector operations for semantic search
 
-#### FastAPI Application (`app/main.py`)
-- **Purpose**: Main application entry point and HTTP server configuration
-- **Responsibilities**: 
-  - Application lifecycle management
-  - Middleware configuration and registration
-  - Exception handling and error responses
-  - Health check endpoints
-  - CORS policy enforcement
-- **Key Features**:
-  - Structured logging with contextual information
-  - Request timing middleware for performance monitoring
-  - Environment-specific configuration (development vs production)
-  - Automatic API documentation generation
+### Provider System
+Pluggable external service integrations:
+- **LLM**: OpenAI, Anthropic, Azure OpenAI
+- **Database**: Supabase, PostgreSQL  
+- **Storage**: Supabase Storage, AWS S3
+- **Vector**: pgvector, Pinecone
 
-#### Configuration Management (`app/core/config.py`)
-- **Purpose**: Centralized configuration management using environment variables
-- **Responsibilities**:
-  - Environment variable validation and type conversion
-  - Default value management
-  - Configuration caching and optimization
-  - Feature flag management
-- **Configuration Categories**:
-  - Application settings (name, version, debug mode)
-  - Security settings (JWT secrets, token expiration)
-  - Provider configurations (API keys, endpoints)
-  - Feature flags (enable/disable specific functionality)
+## Key Design Principles
 
-#### Dependency Injection Container (`app/core/container.py`)
-- **Purpose**: Manages object creation and dependency resolution
-- **Responsibilities**:
-  - Singleton instance management
-  - Lazy initialization of expensive resources
-  - Provider selection based on configuration
-  - Service lifecycle management
-- **Benefits**:
-  - Testability through dependency injection
-  - Loose coupling between components
-  - Easy switching between implementations
-  - Resource optimization through caching
+- **Provider Agnosticism**: Interface-driven external dependencies
+- **Clean Architecture**: Clear separation of concerns
+- **Configuration-Based**: Environment-driven provider selection
+- **Dependency Injection**: Loose coupling via DI container
 
-```mermaid
-graph LR
-    subgraph "FastAPI Application"
-        MAIN[main.py]
-        CONFIG[Configuration]
-        MIDDLEWARE[Middleware Stack]
-        EXCEPTION[Exception Handlers]
-    end
-    
-    subgraph "Dependency Injection"
-        CONTAINER[Container]
-        FACTORY[Factory Pattern]
-        SINGLETON[Singleton Instances]
-    end
-    
-    MAIN --> CONFIG
-    MAIN --> MIDDLEWARE
-    MAIN --> EXCEPTION
-    MAIN --> CONTAINER
-    
-    CONTAINER --> FACTORY
-    FACTORY --> SINGLETON
-```
+## Technology Stack
 
-### 2. Interface Layer
+- **Framework**: FastAPI (Python)
+- **AI Engine**: LangGraph
+- **Database**: PostgreSQL + pgvector
+- **LLM**: OpenAI GPT models
+- **Deployment**: Docker containers
 
-The interface layer defines contracts between different components of the system, enabling loose coupling and easy extensibility. This layer is crucial for maintaining the provider-agnostic nature of the architecture.
+---
 
-#### Core Interfaces
-Each interface defines a specific contract that implementations must fulfill:
-
-**ConversationEngine Interface (`app/interfaces/conversation_engine.py`)**
-- **Purpose**: Defines the contract for conversation processing engines
-- **Methods**:
-  - `process_query()`: Main conversation processing entry point
-  - `initialize_documents()`: Document knowledge base setup
-  - `health_check()`: Engine health monitoring
-- **Data Structures**:
-  - `ConversationContext`: User context and conversation history
-  - `ConversationResponse`: Structured response with metadata
-  - `QueryType`: Enumeration of supported query types
-
-**DatabaseProvider Interface (`app/interfaces/database_provider.py`)**
-- **Purpose**: Abstracts database operations across different providers
-- **Capabilities**: CRUD operations, connection management, transaction support
-- **Benefits**: Database vendor independence, easy testing with mocks
-
-**LLMProvider Interface (`app/interfaces/llm_provider.py`)**
-- **Purpose**: Standardizes language model interactions
-- **Features**: Model selection, token management, streaming support
-- **Flexibility**: Supports multiple LLM providers (OpenAI, Anthropic, local models)
-
-**StorageProvider Interface (`app/interfaces/storage_provider.py`)**
-- **Purpose**: File storage operations abstraction
-- **Operations**: Upload, download, delete, metadata management
-- **Scalability**: Supports various storage backends (cloud and local)
-
-#### Interface Benefits
-- **Testability**: Easy mocking for unit tests
-- **Flexibility**: Runtime provider switching
-- **Maintainability**: Clear contracts between components
-- **Extensibility**: Easy addition of new implementations
-
-```mermaid
-graph TD
-    subgraph "Core Interfaces"
-        CONV_ENGINE[ConversationEngine]
-        DB_PROVIDER[DatabaseProvider]
-        STORAGE_PROVIDER[StorageProvider]
-        LLM_PROVIDER[LLMProvider]
-    end
-    
-    subgraph "Implementations"
-        LANGGRAPH[LangGraphEngine]
-        SUPABASE[SupabaseProvider]
-        SUPABASE_STORAGE[SupabaseStorageProvider]
-        OPENAI_PROVIDER[OpenAIProvider]
-    end
-    
-    CONV_ENGINE -.-> LANGGRAPH
-    DB_PROVIDER -.-> SUPABASE
-    STORAGE_PROVIDER -.-> SUPABASE_STORAGE
-    LLM_PROVIDER -.-> OPENAI_PROVIDER
-```
-
-### Interface Implementation Strategy
-
-The system uses a factory pattern to create appropriate implementations based on configuration:
-
-1. **Configuration-Driven Selection**: Environment variables determine which implementations to use
-2. **Graceful Degradation**: Fallback to mock implementations when providers are unavailable
-3. **Health Monitoring**: Regular health checks ensure provider availability
-4. **Hot Swapping**: Runtime switching between providers for A/B testing or failover
-
-## Data Flow
-
-Understanding the data flow through the University Chatbot system is crucial for comprehending how user requests are processed and responses are generated. The system implements two primary data flow patterns: request processing and conversation processing.
-
-### 1. Request Processing Flow
-
-The request processing flow handles all incoming HTTP requests, from initial reception to final response delivery. This flow ensures proper authentication, validation, and error handling for all API interactions.
-
-#### Flow Stages
-
-1. **Request Reception**: Client sends HTTP request to FastAPI application
-2. **Authentication**: Middleware validates JWT tokens and user permissions
-3. **Request Validation**: Pydantic models validate request structure and data types
-4. **Business Logic**: Service layer processes the request according to business rules
-5. **Data Access**: Repository layer interacts with databases through provider interfaces
-6. **Provider Interaction**: Providers communicate with external services (databases, APIs)
-7. **Response Assembly**: Results are assembled into standardized response format
-8. **Response Delivery**: HTTP response is sent back to the client
-
-#### Security and Validation
-- **Input Sanitization**: All user inputs are sanitized to prevent injection attacks
-- **Rate Limiting**: Prevents abuse through request rate limiting
-- **Error Handling**: Comprehensive error handling with structured error responses
-- **Audit Logging**: All requests are logged for security and debugging purposes
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant FastAPI
-    participant Service
-    participant Repository
-    participant Provider
-    participant External
-    
-    Client->>FastAPI: HTTP Request
-    FastAPI->>FastAPI: Authentication
-    FastAPI->>FastAPI: Validation
-    FastAPI->>Service: Business Logic
-    Service->>Repository: Data Access
-    Repository->>Provider: Provider Interface
-    Provider->>External: External API/DB
-    External-->>Provider: Response
-    Provider-->>Repository: Processed Data
-    Repository-->>Service: Domain Objects
-    Service-->>FastAPI: Service Response
-    FastAPI-->>Client: HTTP Response
-```
-
-### 2. Conversation Processing Flow
-
-The conversation processing flow is the heart of the chatbot system, handling user messages and generating intelligent responses through the conversation engine architecture.
-
-#### Conversation Flow Components
-
-**Context Management**:
-- User session tracking and conversation history
-- User preferences and metadata management
-- Document context and relevance tracking
-
-**Intent Classification**:
-- LLM-powered intent analysis
-- Query type determination (document QA, complaints, general info)
-- Confidence scoring for classification accuracy
-
-**Information Retrieval**:
-- Vector-based document search for relevant context
-- Semantic similarity matching
-- Multi-source information aggregation
-
-**Response Generation**:
-- Context-aware response generation using LLMs
-- Response formatting and enhancement
-- Source attribution and confidence scoring
-
-**Quality Assurance**:
-- Response validation and safety checks
-- Fact verification against source documents
-- Inappropriate content filtering
+*For detailed implementation, deployment guides, and API documentation, see the respective documentation files.*
 
 ```mermaid
 sequenceDiagram
