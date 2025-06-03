@@ -1,6 +1,13 @@
 # =======================
-# app/engines/factory.py
+# app/engines/factory.py - Updated for Modular LangGraph Engine
 # =======================
+"""
+Factory for creating conversation engines with real modular LangGraph implementation.
+
+Simple factory that creates the modular LangGraph engine with proper dependency injection.
+Follows KISS principle - clean setup, clear dependencies.
+"""
+
 from typing import Dict, Any, List
 import structlog
 
@@ -12,7 +19,11 @@ logger = structlog.get_logger()
 
 
 class ConversationEngineFactory:
-    """Factory for creating conversation engines with real implementations."""
+    """
+    Simple factory for creating conversation engines.
+    
+    Now creates real modular LangGraph engines with full functionality.
+    """
     
     def __init__(self, settings: Settings, container):
         self.settings = settings
@@ -20,16 +31,32 @@ class ConversationEngineFactory:
         self._engines: Dict[str, ConversationEngine] = {}
     
     def get_engine(self, engine_type: str) -> ConversationEngine:
-        """Get conversation engine by type."""
+        """
+        Get conversation engine by type.
+        
+        Args:
+            engine_type: Type of engine to create
+            
+        Returns:
+            ConversationEngine instance
+        """
         if engine_type not in self._engines:
             self._engines[engine_type] = self._create_engine(engine_type)
         return self._engines[engine_type]
     
     def _create_engine(self, engine_type: str) -> ConversationEngine:
-        """Create engine instance with real implementations."""
+        """
+        Create engine instance with real implementations.
+        
+        Args:
+            engine_type: Type of engine to create
+            
+        Returns:
+            ConversationEngine instance
+        """
         try:
             if engine_type == "langgraph":
-                return self._create_langgraph_engine()
+                return self._create_modular_langgraph_engine()
             elif engine_type == "mock":
                 return self._create_mock_engine()
             else:
@@ -41,33 +68,33 @@ class ConversationEngineFactory:
             logger.info("Falling back to mock engine")
             return self._create_mock_engine()
     
-    def _create_langgraph_engine(self) -> ConversationEngine:
-        """Create real LangGraph engine with all dependencies."""
+    def _create_modular_langgraph_engine(self) -> ConversationEngine:
+        """
+        Create real modular LangGraph engine with all dependencies.
+        
+        Returns:
+            ModularLangGraphEngine instance
+        """
         try:
-            # Import here to avoid circular imports and handle missing dependencies
-            from app.engines.langgraph_engine import SimpleLangGraphEngine
+            # Import the modular engine
+            from app.engines.langgraph import ModularLangGraphEngine
             
-            # Get required services from container
-            document_service = self.container.get_document_service()
-            complaint_service = self.container.get_complaint_service()
-            llm_provider = self.container.get_llm_provider()
+            # Gather services from container
+            services = self._get_services()
+            providers = self._get_providers()
             
-            # Validate dependencies
-            if not document_service:
-                raise AppException("DocumentService not available")
-            if not complaint_service:
-                raise AppException("ComplaintService not available") 
-            if not llm_provider:
-                raise AppException("LLM Provider not available")
+            # Validate critical dependencies
+            self._validate_dependencies(services, providers)
             
-            # Create LangGraph engine
-            engine = SimpleLangGraphEngine(
-                document_service=document_service,
-                complaint_service=complaint_service,
-                llm_provider=llm_provider
+            # Create modular engine
+            engine = ModularLangGraphEngine(
+                services=services,
+                providers=providers
             )
             
-            logger.info("LangGraph engine created successfully",
+            logger.info("Modular LangGraph engine created successfully",
+                       services=list(services.keys()),
+                       providers=list(providers.keys()),
                        llm_provider=self.settings.LANGGRAPH_LLM_PROVIDER,
                        model=self.settings.LANGGRAPH_MODEL)
             
@@ -75,31 +102,122 @@ class ConversationEngineFactory:
             
         except ImportError as e:
             logger.warning("LangGraph dependencies not available", error=str(e))
-            raise AppException("LangGraph not installed. Install with: pip install langgraph")
+            raise AppException("LangGraph not installed. Install with: pip install langgraph langchain-core")
+        
         except Exception as e:
-            logger.error("Failed to create LangGraph engine", error=str(e))
-            raise AppException(f"LangGraph engine creation failed: {str(e)}")
+            logger.error("Failed to create modular LangGraph engine", error=str(e))
+            raise AppException(f"Modular LangGraph engine creation failed: {str(e)}")
+    
+    def _get_services(self) -> Dict[str, Any]:
+        """
+        Get all required services from container.
+        
+        Returns:
+            Dictionary of service instances
+        """
+        services = {}
+        
+        try:
+            # Get document service
+            document_service = self.container.get_document_service()
+            if document_service:
+                services['document_service'] = document_service
+                logger.debug("Document service loaded")
+            else:
+                logger.warning("Document service not available")
+        except Exception as e:
+            logger.warning("Failed to get document service", error=str(e))
+        
+        try:
+            # Get complaint service
+            complaint_service = self.container.get_complaint_service()
+            if complaint_service:
+                services['complaint_service'] = complaint_service
+                logger.debug("Complaint service loaded")
+            else:
+                logger.warning("Complaint service not available")
+        except Exception as e:
+            logger.warning("Failed to get complaint service", error=str(e))
+        
+        return services
+    
+    def _get_providers(self) -> Dict[str, Any]:
+        """
+        Get all required providers from container.
+        
+        Returns:
+            Dictionary of provider instances
+        """
+        providers = {}
+        
+        try:
+            # Get LLM provider
+            llm_provider = self.container.get_llm_provider()
+            if llm_provider:
+                providers['llm_provider'] = llm_provider
+                logger.debug("LLM provider loaded", 
+                           provider=llm_provider.get_provider_name())
+            else:
+                logger.warning("LLM provider not available")
+        except Exception as e:
+            logger.warning("Failed to get LLM provider", error=str(e))
+        
+        try:
+            # Get embedding service (if needed)
+            embedding_service = self.container.get_embedding_service()
+            if embedding_service:
+                providers['embedding_service'] = embedding_service
+                logger.debug("Embedding service loaded")
+        except Exception as e:
+            logger.warning("Failed to get embedding service", error=str(e))
+        
+        return providers
+    
+    def _validate_dependencies(self, services: Dict[str, Any], providers: Dict[str, Any]):
+        """
+        Validate that critical dependencies are available.
+        
+        Args:
+            services: Available services
+            providers: Available providers
+            
+        Raises:
+            AppException: If critical dependencies are missing
+        """
+        # Check for LLM provider (critical for intent classification)
+        if 'llm_provider' not in providers:
+            raise AppException("LLM provider is required but not available")
+        
+        # Warn about missing services (degraded functionality)
+        if 'document_service' not in services:
+            logger.warning("Document service not available - document search will be disabled")
+        
+        if 'complaint_service' not in services:
+            logger.warning("Complaint service not available - complaint processing will be disabled")
+        
+        logger.info("Dependency validation completed",
+                   services_available=list(services.keys()),
+                   providers_available=list(providers.keys()))
     
     def _create_mock_engine(self) -> ConversationEngine:
-        """Create mock engine for testing/fallback."""
+        """
+        Create mock engine for testing/fallback.
+        
+        Returns:
+            MockConversationEngine instance
+        """
         from app.engines.base import MockConversationEngine
         
         logger.info("Created mock conversation engine")
         return MockConversationEngine()
     
-    def _create_openai_engine(self) -> ConversationEngine:
-        """Create direct OpenAI engine (future implementation)."""
-        # This would be a simpler engine that uses OpenAI directly
-        # without LangGraph for scenarios where LangGraph is overkill
-        raise AppException("OpenAI direct engine not implemented yet")
-    
-    def _create_anthropic_engine(self) -> ConversationEngine:
-        """Create direct Anthropic engine (future implementation)."""
-        # This would use Claude directly for conversations
-        raise AppException("Anthropic direct engine not implemented yet")
-    
     def get_available_engines(self) -> List[str]:
-        """Get list of available engine types."""
+        """
+        Get list of available engine types.
+        
+        Returns:
+            List of available engine type names
+        """
         available = ["mock"]  # Always available
         
         try:
@@ -109,17 +227,25 @@ class ConversationEngineFactory:
         except ImportError:
             pass
         
-        # Check for other dependencies as needed
-        if self.settings.OPENAI_API_KEY:
-            available.append("openai_direct")
-        
-        if self.settings.ANTHROPIC_API_KEY:
-            available.append("anthropic_direct")
+        # Check for required services
+        try:
+            if self.container.get_llm_provider():
+                logger.debug("LLM provider available for engines")
+        except Exception:
+            logger.warning("LLM provider not available - engine functionality will be limited")
         
         return available
     
     def switch_engine(self, new_engine_type: str) -> bool:
-        """Switch to a different engine type."""
+        """
+        Switch to a different engine type.
+        
+        Args:
+            new_engine_type: Engine type to switch to
+            
+        Returns:
+            True if switch was successful, False otherwise
+        """
         try:
             # Validate engine type is available
             available_engines = self.get_available_engines()
@@ -135,8 +261,6 @@ class ConversationEngineFactory:
             # Test creation
             test_engine = self._create_engine(new_engine_type)
             
-            # Update settings (this would need proper settings persistence)
-            # For now, just log the change
             logger.info(f"Switched conversation engine",
                        old_engine=self.settings.CONVERSATION_ENGINE,
                        new_engine=new_engine_type)
@@ -149,7 +273,12 @@ class ConversationEngineFactory:
             return False
     
     async def health_check_all_engines(self) -> Dict[str, Any]:
-        """Check health of all available engines."""
+        """
+        Check health of all available engines.
+        
+        Returns:
+            Dictionary with health status of all engines
+        """
         results = {}
         available_engines = self.get_available_engines()
         
@@ -170,5 +299,45 @@ class ConversationEngineFactory:
         return {
             "available_engines": available_engines,
             "current_engine": self.settings.CONVERSATION_ENGINE,
-            "engine_health": results
+            "engine_health": results,
+            "factory_info": {
+                "cached_engines": list(self._engines.keys()),
+                "settings": {
+                    "llm_provider": self.settings.LANGGRAPH_LLM_PROVIDER,
+                    "model": self.settings.LANGGRAPH_MODEL
+                }
+            }
         }
+    
+    def get_engine_info(self, engine_type: str) -> Dict[str, Any]:
+        """
+        Get detailed information about a specific engine.
+        
+        Args:
+            engine_type: Engine type to get info for
+            
+        Returns:
+            Dictionary with engine information
+        """
+        try:
+            engine = self.get_engine(engine_type)
+            
+            if hasattr(engine, '_get_metrics'):
+                metrics = engine._get_metrics()
+            else:
+                metrics = {}
+            
+            return {
+                "engine_type": engine_type,
+                "engine_class": type(engine).__name__,
+                "available": True,
+                "metrics": metrics
+            }
+            
+        except Exception as e:
+            return {
+                "engine_type": engine_type,
+                "engine_class": "Unknown",
+                "available": False,
+                "error": str(e)
+            }
