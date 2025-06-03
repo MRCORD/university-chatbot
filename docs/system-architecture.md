@@ -645,7 +645,7 @@ graph TB
     subgraph API_Layer
         subgraph API_Versioning
             V1[API v1]
-            V2[API v2 (Future)]
+            V2[API v2_Future]
         end
         
         subgraph API_Endpoints
