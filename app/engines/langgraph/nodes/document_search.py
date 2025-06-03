@@ -1,11 +1,11 @@
 # =======================
-# app/engines/langgraph/nodes/document_search.py
+# app/engines/langgraph/nodes/document_search.py - SIMPLE VERSION
 # =======================
 """
 Document search node for LangGraph workflows.
 
 Simple node that searches documents using DocumentTool.
-Follows KISS principle - one job, do it well.
+Follows KISS principle - one job, do it well: RETRIEVAL ONLY.
 """
 
 import structlog
@@ -18,25 +18,25 @@ logger = structlog.get_logger()
 
 class DocumentSearchNode(BaseNode):
     """
-    Searches documents for answers to user questions.
+    Searches documents for relevant content.
     
     Simple responsibility:
     1. Take user message (question)
     2. Call DocumentTool to search
-    3. Update state with search results
+    3. Return raw search results
     
-    That's it. KISS.
+    That's it. KISS - answer generation happens elsewhere.
     """
     
     async def execute(self, state: ConversationState) -> ConversationState:
         """
-        Search documents and update state with results.
+        Search documents and return raw results.
         
         Args:
             state: Current conversation state
             
         Returns:
-            State updated with search results
+            State updated with raw search results
         """
         self._log_start(state)
         
@@ -45,7 +45,6 @@ class DocumentSearchNode(BaseNode):
             user_message = state.get('user_message', '')
             
             if not user_message:
-                # No message to search
                 StateManager.update_tool_result(
                     state,
                     tool_type="document",
@@ -58,7 +57,6 @@ class DocumentSearchNode(BaseNode):
             # Get document tool
             document_tool = self.tools.get('document')
             if not document_tool:
-                # No document tool available
                 StateManager.update_tool_result(
                     state,
                     tool_type="document", 
@@ -71,20 +69,22 @@ class DocumentSearchNode(BaseNode):
             # Search documents using tool
             search_result = await document_tool.search_documents(
                 query=user_message,
-                limit=3,  # Keep it simple - just top 3 results
-                similarity_threshold=0.7
+                limit=3,  # Keep it simple - top 3 results
+                similarity_threshold=0.6
             )
             
-            # Update state with search results
-            if search_result.success and search_result.data.get('content'):
-                # Found relevant documents
+            # Update state with RAW search results (no answer generation here)
+            if search_result.success and search_result.data.get('chunks'):
+                chunks = search_result.data['chunks']
+                
                 StateManager.update_tool_result(
                     state,
                     tool_type="document",
                     tool_result={
                         'type': 'document_search',
-                        'content': search_result.data['content'],
-                        'chunks_found': search_result.chunks_found,
+                        'query': user_message,
+                        'chunks': chunks,  # Raw chunks for answer generation
+                        'chunks_found': len(chunks),
                         'best_similarity': search_result.best_similarity
                     },
                     success=True,
@@ -97,7 +97,8 @@ class DocumentSearchNode(BaseNode):
                     tool_type="document",
                     tool_result={
                         'type': 'no_documents_found',
-                        'message': 'No encontré información específica sobre eso en los documentos de UP.'
+                        'query': user_message,
+                        'message': 'No documents found'
                     },
                     success=False
                 )
@@ -109,7 +110,6 @@ class DocumentSearchNode(BaseNode):
             error_msg = f"Document search failed: {str(e)}"
             self._log_error(state, error_msg)
             
-            # Update state with error
             StateManager.update_tool_result(
                 state,
                 tool_type="document",
