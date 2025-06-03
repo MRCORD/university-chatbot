@@ -9,7 +9,7 @@ used in the LangGraph workflow, ensuring data integrity and providing
 clear API contracts between workflow components.
 """
 
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, Literal
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field, validator
@@ -136,7 +136,7 @@ class ToolResult(BaseModel):
 class DocumentSearchResult(ToolResult):
     """Specialized result for document search operations."""
     
-    tool_type: ToolType = Field(default=ToolType.DOCUMENT, const=True)
+    tool_type: Literal[ToolType.DOCUMENT] = Field(default=ToolType.DOCUMENT)
     
     # Document-specific fields
     query: Optional[str] = Field(None, description="Original search query")
@@ -155,7 +155,7 @@ class DocumentSearchResult(ToolResult):
 class ComplaintSubmissionResult(ToolResult):
     """Specialized result for complaint submission operations."""
     
-    tool_type: ToolType = Field(default=ToolType.COMPLAINT, const=True)
+    tool_type: Literal[ToolType.COMPLAINT] = Field(default=ToolType.COMPLAINT)
     
     # Complaint-specific fields
     complaint_id: Optional[str] = Field(None, description="Generated complaint ID")
@@ -174,7 +174,7 @@ class ComplaintSubmissionResult(ToolResult):
 class GeneralChatResult(ToolResult):
     """Specialized result for general chat/LLM operations."""
     
-    tool_type: ToolType = Field(default=ToolType.LLM, const=True)
+    tool_type: Literal[ToolType.LLM] = Field(default=ToolType.LLM)
     
     # LLM-specific fields
     model_used: Optional[str] = Field(None, description="LLM model used for generation")

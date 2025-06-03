@@ -15,7 +15,7 @@ from app.core.exceptions import ConversationEngineException
 logger = structlog.get_logger()
 
 try:
-    from langgraph import StateGraph, START, END
+    from langgraph.graph import StateGraph, START, END
     from typing_extensions import TypedDict
 except ImportError:
     logger.warning("LangGraph not installed. Install with: pip install langgraph")

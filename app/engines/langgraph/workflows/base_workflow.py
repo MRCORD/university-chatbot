@@ -15,7 +15,7 @@ import structlog
 logger = structlog.get_logger()
 
 try:
-    from langgraph import StateGraph
+    from langgraph.graph import StateGraph
     LANGGRAPH_AVAILABLE = True
 except ImportError:
     logger.warning("LangGraph not available - workflows will use fallback mode")

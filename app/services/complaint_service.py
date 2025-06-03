@@ -49,6 +49,7 @@ class ComplaintService:
                 'upvotes': 0,
                 'view_count': 0,
                 'ai_generated_tags': [],  # TODO: Extract tags with AI
+                'similar_complaint_ids': [],  # Initialize as empty list
                 'ai_extraction_metadata': {}
             }
             
@@ -68,7 +69,7 @@ class ComplaintService:
                 upvotes=complaint['upvotes'],
                 view_count=complaint['view_count'],
                 is_anonymous=complaint['is_anonymous'],
-                similar_complaint_ids=complaint.get('similar_complaint_ids', []),
+                similar_complaint_ids=complaint.get('similar_complaint_ids') or [],
                 resolved_at=complaint.get('resolved_at'),
                 created_at=complaint['created_at']
             )
@@ -101,7 +102,7 @@ class ComplaintService:
                     upvotes=complaint['upvotes'],
                     view_count=complaint['view_count'],
                     is_anonymous=complaint['is_anonymous'],
-                    similar_complaint_ids=complaint.get('similar_complaint_ids', []),
+                    similar_complaint_ids=complaint.get('similar_complaint_ids') or [],
                     resolved_at=complaint.get('resolved_at'),
                     created_at=complaint['created_at']
                 )
